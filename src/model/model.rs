@@ -10,6 +10,7 @@ use crate::model::repository::Repository;
 
 /// The root element of a Maven POM (Project Object Model)
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename = "project")]
 #[serde(rename_all = "camelCase")]
 pub struct Model {
     /// Declares to which version of project descriptor this POM conforms.
@@ -20,9 +21,11 @@ pub struct Model {
     pub parent: Option<Parent>,
 
     /// A universally unique identifier for a project.
+    #[serde(rename = "groupId")]
     pub group_id: String,
 
     /// The identifier for this artifact that is unique within the group.
+    #[serde(rename = "artifactId")]
     pub artifact_id: String,
 
     /// The current version of the artifact produced by this project.
@@ -60,8 +63,8 @@ pub struct Model {
     pub contributors: Option<Vec<Contributor>>,
 
     /// Project dependencies.
-    #[serde(rename = "dependencies")]
-    pub dependencies: Option<Vec<Dependency>>,
+    #[serde(rename = "dependencies", default)]
+    pub dependencies: Option<Dependencies>,
 
     /// Dependency management section.
     #[serde(rename = "dependencyManagement")]
@@ -138,10 +141,41 @@ pub struct Contributor {
     pub timezone: Option<String>,
 }
 
+/// Wrapper for dependencies list
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+pub struct Dependencies {
+    #[serde(rename = "dependency", default)]
+    pub dependencies: Vec<Dependency>,
+}
+
+impl Dependencies {
+    pub fn new() -> Self {
+        Self {
+            dependencies: Vec::new(),
+        }
+    }
+    
+    pub fn into_vec(self) -> Vec<Dependency> {
+        self.dependencies
+    }
+}
+
+impl From<Vec<Dependency>> for Dependencies {
+    fn from(deps: Vec<Dependency>) -> Self {
+        Self { dependencies: deps }
+    }
+}
+
+impl From<Dependencies> for Vec<Dependency> {
+    fn from(deps: Dependencies) -> Self {
+        deps.dependencies
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct DependencyManagement {
-    #[serde(rename = "dependencies")]
-    pub dependencies: Option<Vec<Dependency>>,
+    #[serde(rename = "dependencies", default)]
+    pub dependencies: Option<Dependencies>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -171,6 +205,13 @@ impl Model {
     /// Get the full project identifier (groupId:artifactId:version)
     pub fn full_id(&self) -> String {
         format!("{}:{}:{}", self.group_id, self.artifact_id, self.version)
+    }
+    
+    /// Get dependencies as a Vec
+    pub fn dependencies_vec(&self) -> Vec<Dependency> {
+        self.dependencies.as_ref()
+            .map(|deps| deps.dependencies.clone())
+            .unwrap_or_default()
     }
 }
 

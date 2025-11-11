@@ -83,3 +83,77 @@ impl fmt::Display for ArtifactCoordinates {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_coordinates_new() {
+        let coords = ArtifactCoordinates::new("com.example", "myapp", "1.0.0");
+        assert_eq!(coords.group_id, "com.example");
+        assert_eq!(coords.artifact_id, "myapp");
+        assert_eq!(coords.version, "1.0.0");
+        assert_eq!(coords.packaging, None);
+        assert_eq!(coords.classifier, None);
+    }
+
+    #[test]
+    fn test_coordinates_id() {
+        let coords = ArtifactCoordinates::new("com.example", "myapp", "1.0.0");
+        assert_eq!(coords.id(), "com.example:myapp");
+    }
+
+    #[test]
+    fn test_coordinates_full_id() {
+        let coords = ArtifactCoordinates::new("com.example", "myapp", "1.0.0");
+        assert_eq!(coords.full_id(), "com.example:myapp:1.0.0");
+    }
+
+    #[test]
+    fn test_coordinates_from_str() {
+        let coords = ArtifactCoordinates::from_str("com.example:myapp:1.0.0").unwrap();
+        assert_eq!(coords.group_id, "com.example");
+        assert_eq!(coords.artifact_id, "myapp");
+        assert_eq!(coords.version, "1.0.0");
+    }
+
+    #[test]
+    fn test_coordinates_from_str_with_packaging() {
+        let coords = ArtifactCoordinates::from_str("com.example:myapp:1.0.0:jar").unwrap();
+        assert_eq!(coords.packaging, Some("jar".to_string()));
+    }
+
+    #[test]
+    fn test_coordinates_from_str_with_classifier() {
+        let coords = ArtifactCoordinates::from_str("com.example:myapp:1.0.0:jar:sources").unwrap();
+        assert_eq!(coords.packaging, Some("jar".to_string()));
+        assert_eq!(coords.classifier, Some("sources".to_string()));
+    }
+
+    #[test]
+    fn test_coordinates_from_str_invalid() {
+        assert!(ArtifactCoordinates::from_str("invalid").is_err());
+        assert!(ArtifactCoordinates::from_str("com.example:myapp").is_err());
+    }
+
+    #[test]
+    fn test_coordinates_display() {
+        let coords = ArtifactCoordinates::new("com.example", "myapp", "1.0.0");
+        assert_eq!(coords.to_string(), "com.example:myapp:1.0.0");
+    }
+
+    #[test]
+    fn test_coordinates_display_with_packaging() {
+        let mut coords = ArtifactCoordinates::new("com.example", "myapp", "1.0.0");
+        coords.packaging = Some("jar".to_string());
+        assert_eq!(coords.to_string(), "com.example:myapp:1.0.0:jar");
+    }
+
+    #[test]
+    fn test_coordinates_display_with_classifier() {
+        let mut coords = ArtifactCoordinates::new("com.example", "myapp", "1.0.0");
+        coords.packaging = Some("jar".to_string());
+        coords.classifier = Some("sources".to_string());
+        assert_eq!(coords.to_string(), "com.example:myapp:1.0.0:jar:sources");
+    }
+}

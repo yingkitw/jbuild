@@ -103,3 +103,81 @@ impl Default for PropertyInterpolator {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_interpolate_simple() {
+        let interpolator = PropertyInterpolator::new()
+            .add_property("test.property".to_string(), "test-value".to_string());
+        
+        let result = interpolator.interpolate("Hello ${test.property}").unwrap();
+        assert_eq!(result, "Hello test-value");
+    }
+
+    #[test]
+    fn test_interpolate_multiple() {
+        let interpolator = PropertyInterpolator::new()
+            .add_property("prop1".to_string(), "value1".to_string())
+            .add_property("prop2".to_string(), "value2".to_string());
+        
+        let result = interpolator.interpolate("${prop1} and ${prop2}").unwrap();
+        assert_eq!(result, "value1 and value2");
+    }
+
+    #[test]
+    fn test_interpolate_nested() {
+        let interpolator = PropertyInterpolator::new()
+            .add_property("base".to_string(), "target".to_string())
+            .add_property("target".to_string(), "${base}/classes".to_string());
+        
+        let result = interpolator.interpolate("${target}").unwrap();
+        assert_eq!(result, "target/classes");
+    }
+
+    #[test]
+    fn test_interpolate_missing_property() {
+        let interpolator = PropertyInterpolator::new();
+        
+        let result = interpolator.interpolate("Hello ${missing.property}").unwrap();
+        assert_eq!(result, "Hello ${missing.property}");
+    }
+
+    #[test]
+    fn test_interpolate_no_placeholders() {
+        let interpolator = PropertyInterpolator::new();
+        
+        let result = interpolator.interpolate("Hello World").unwrap();
+        assert_eq!(result, "Hello World");
+    }
+
+    #[test]
+    fn test_interpolate_map() {
+        let interpolator = PropertyInterpolator::new()
+            .add_property("prop1".to_string(), "value1".to_string());
+        
+        let mut map = HashMap::new();
+        map.insert("key1".to_string(), "Hello ${prop1}".to_string());
+        map.insert("key2".to_string(), "World".to_string());
+        
+        interpolator.interpolate_map(&mut map).unwrap();
+        
+        assert_eq!(map.get("key1"), Some(&"Hello value1".to_string()));
+        assert_eq!(map.get("key2"), Some(&"World".to_string()));
+    }
+
+    #[test]
+    fn test_interpolate_with_defaults() {
+        let mut props = HashMap::new();
+        props.insert("project.groupId".to_string(), "com.example".to_string());
+        props.insert("project.artifactId".to_string(), "myapp".to_string());
+        
+        let result = PropertyInterpolator::interpolate_with_defaults(
+            "${project.groupId}:${project.artifactId}:${project.version}",
+            &props
+        ).unwrap();
+        
+        assert_eq!(result, "com.example:myapp:");
+    }
+}

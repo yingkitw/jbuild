@@ -2,12 +2,13 @@ use serde::{Deserialize, Serialize};
 
 /// Project dependency
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
 pub struct Dependency {
     /// The group ID of the dependency.
+    #[serde(rename = "groupId")]
     pub group_id: String,
 
     /// The artifact ID of the dependency.
+    #[serde(rename = "artifactId")]
     pub artifact_id: String,
 
     /// The version of the dependency.
@@ -32,12 +33,13 @@ pub struct Dependency {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
 pub struct Exclusion {
     /// The group ID to exclude.
+    #[serde(rename = "groupId")]
     pub group_id: String,
 
     /// The artifact ID to exclude.
+    #[serde(rename = "artifactId")]
     pub artifact_id: String,
 }
 

@@ -113,12 +113,12 @@ impl EffectiveModelBuilder {
                     } else {
                         let child_deps = child_dep_mgmt.dependencies.as_mut().unwrap();
                         // Add parent dependencies that aren't in child
-                        for parent_dep in parent_deps {
+                        for parent_dep in &parent_deps.dependencies {
                             let parent_key = format!("{}:{}", parent_dep.group_id, parent_dep.artifact_id);
-                            if !child_deps.iter().any(|d| {
+                            if !child_deps.dependencies.iter().any(|d| {
                                 format!("{}:{}", d.group_id, d.artifact_id) == parent_key
                             }) {
-                                child_deps.push(parent_dep.clone());
+                                child_deps.dependencies.push(parent_dep.clone());
                             }
                         }
                     }

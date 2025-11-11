@@ -165,9 +165,7 @@ impl PluginRegistry {
         }
 
         // Also check root-level dependencies
-        if let Some(ref deps) = model.dependencies {
-            dependencies.extend(deps.clone());
-        }
+        dependencies.extend(model.dependencies_vec());
 
         Ok(dependencies)
     }

@@ -131,12 +131,10 @@ impl GraphBuilder {
             let mut deps = Vec::new();
 
             // Find dependencies that are in the reactor
-            if let Some(dependencies) = &project.model.dependencies {
-                for dep in dependencies {
-                    let dep_id = format!("{}:{}", dep.group_id, dep.artifact_id);
-                    if project_map.contains_key(&dep_id) {
-                        deps.push(dep_id);
-                    }
+            for dep in project.model.dependencies_vec() {
+                let dep_id = format!("{}:{}", dep.group_id, dep.artifact_id);
+                if project_map.contains_key(&dep_id) {
+                    deps.push(dep_id);
                 }
             }
 

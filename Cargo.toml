@@ -65,3 +65,7 @@ which = "6.0"
 
 # JNI for Java integration (optional feature)
 jni = { version = "0.21", optional = true }
+
+[dev-dependencies]
+# Snapshot testing
+insta = "1.38"

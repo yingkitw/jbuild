@@ -90,3 +90,94 @@ impl Default for Manifest {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_manifest_new() {
+        let manifest = Manifest::new();
+        assert!(manifest.get_main_attribute("Manifest-Version").is_none());
+    }
+
+    #[test]
+    fn test_manifest_set_main_attribute() {
+        let mut manifest = Manifest::new();
+        manifest.set_main_attribute("Manifest-Version".to_string(), "1.0".to_string());
+        
+        assert_eq!(
+            manifest.get_main_attribute("Manifest-Version"),
+            Some(&"1.0".to_string())
+        );
+    }
+
+    #[test]
+    fn test_manifest_set_section_attribute() {
+        let mut manifest = Manifest::new();
+        manifest.set_section_attribute(
+            "com/example/".to_string(),
+            "Implementation-Title".to_string(),
+            "MyApp".to_string(),
+        );
+        
+        // Section attributes are stored internally
+        assert!(manifest.get_main_attribute("Implementation-Title").is_none());
+    }
+
+    #[test]
+    fn test_manifest_default_jar_manifest() {
+        let manifest = Manifest::default_jar_manifest("com.example", "myapp", "1.0.0");
+        
+        assert_eq!(
+            manifest.get_main_attribute("Manifest-Version"),
+            Some(&"1.0".to_string())
+        );
+        assert!(manifest.get_main_attribute("Created-By").is_some());
+    }
+
+    #[test]
+    fn test_manifest_to_bytes() {
+        let mut manifest = Manifest::new();
+        manifest.set_main_attribute("Manifest-Version".to_string(), "1.0".to_string());
+        
+        let bytes = manifest.to_bytes().unwrap();
+        let content = String::from_utf8(bytes).unwrap();
+        
+        assert!(content.contains("Manifest-Version: 1.0"));
+    }
+
+    #[test]
+    fn test_manifest_write_format() {
+        let mut manifest = Manifest::new();
+        manifest.set_main_attribute("Manifest-Version".to_string(), "1.0".to_string());
+        manifest.set_main_attribute("Main-Class".to_string(), "com.example.Main".to_string());
+        
+        let bytes = manifest.to_bytes().unwrap();
+        let content = String::from_utf8(bytes).unwrap();
+        
+        // Check format: key: value
+        assert!(content.contains("Manifest-Version: 1.0"));
+        assert!(content.contains("Main-Class: com.example.Main"));
+        // Manifest should end with newline
+        assert!(content.ends_with('\n'));
+    }
+
+    #[test]
+    fn test_manifest_sections() {
+        let mut manifest = Manifest::new();
+        manifest.set_main_attribute("Manifest-Version".to_string(), "1.0".to_string());
+        manifest.set_section_attribute(
+            "com/example/".to_string(),
+            "Implementation-Title".to_string(),
+            "MyApp".to_string(),
+        );
+        
+        let bytes = manifest.to_bytes().unwrap();
+        let content = String::from_utf8(bytes).unwrap();
+        
+        // Check section format
+        assert!(content.contains("Name: com/example/"));
+        assert!(content.contains("Implementation-Title: MyApp"));
+    }
+}
+

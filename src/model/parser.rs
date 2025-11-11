@@ -66,10 +66,17 @@ pub fn normalize_xml_namespaces(xml: &str) -> Result<String, ParseError> {
                 writer.extend_from_slice(b"<");
                 writer.extend_from_slice(local_name.as_bytes());
                 
-                // Copy attributes (also removing namespaces)
+                // Copy attributes (also removing namespaces and xmlns declarations)
                 for attr in e.attributes() {
                     if let Ok(attr) = attr {
                         let attr_name = String::from_utf8_lossy(attr.key.as_ref());
+                        
+                        // Skip xmlns and xsi namespace declarations
+                        if attr_name == "xmlns" || attr_name.starts_with("xmlns:") || 
+                           attr_name == "xsi:schemaLocation" || attr_name.starts_with("xsi:") {
+                            continue;
+                        }
+                        
                         let local_attr_name = if let Some(pos) = attr_name.find(':') {
                             &attr_name[pos + 1..]
                         } else {

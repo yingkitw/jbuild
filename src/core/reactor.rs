@@ -88,13 +88,11 @@ impl Reactor {
         // Build dependency graph
         for project in &projects {
             let project_id = project.id();
-            if let Some(dependencies) = &project.model.dependencies {
-                for dep in dependencies {
-                    let dep_id = format!("{}:{}", dep.group_id, dep.artifact_id);
-                    // Check if this dependency is in our reactor
-                    if project_index.contains_key(&dep_id) {
-                        dependency_graph.add_dependency(project_id.clone(), dep_id);
-                    }
+            for dep in project.model.dependencies_vec() {
+                let dep_id = format!("{}:{}", dep.group_id, dep.artifact_id);
+                // Check if this dependency is in our reactor
+                if project_index.contains_key(&dep_id) {
+                    dependency_graph.add_dependency(project_id.clone(), dep_id);
                 }
             }
         }

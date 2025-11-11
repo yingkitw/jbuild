@@ -116,3 +116,122 @@ impl PluginCompatibility {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::model::build::{Plugin as ModelPlugin, Execution};
+    use crate::model::Dependency;
+
+    fn create_test_plugin(group_id: &str, artifact_id: &str, version: &str) -> ModelPlugin {
+        ModelPlugin {
+            group_id: Some(group_id.to_string()),
+            artifact_id: artifact_id.to_string(),
+            version: Some(version.to_string()),
+            extensions: None,
+            inherited: None,
+            configuration: None,
+            dependencies: None,
+            executions: None,
+            goals: None,
+        }
+    }
+
+    #[test]
+    fn test_merge_configurations_none() {
+        let result = PluginCompatibility::merge_configurations(None, None);
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn test_merge_configurations_parent_only() {
+        let parent = serde_json::json!({"key": "value"});
+        let result = PluginCompatibility::merge_configurations(Some(&parent), None);
+        assert_eq!(result, Some(parent));
+    }
+
+    #[test]
+    fn test_merge_configurations_child_only() {
+        let child = serde_json::json!({"key": "value"});
+        let result = PluginCompatibility::merge_configurations(None, Some(&child));
+        assert_eq!(result, Some(child));
+    }
+
+    #[test]
+    fn test_merge_configurations_merge() {
+        let parent = serde_json::json!({"parent": "value", "shared": "parent"});
+        let child = serde_json::json!({"child": "value", "shared": "child"});
+        let result = PluginCompatibility::merge_configurations(Some(&parent), Some(&child));
+        
+        assert!(result.is_some());
+        let merged = result.unwrap();
+        assert_eq!(merged["parent"], "value");
+        assert_eq!(merged["child"], "value");
+        assert_eq!(merged["shared"], "child"); // Child overrides
+    }
+
+    #[test]
+    fn test_apply_inheritance_version() {
+        let parent = create_test_plugin("com.example", "parent-plugin", "1.0.0");
+        let mut child = create_test_plugin("com.example", "child-plugin", "");
+        child.version = None;
+
+        let merged = PluginCompatibility::apply_inheritance(&child, Some(&parent));
+        assert_eq!(merged.version, Some("1.0.0".to_string()));
+    }
+
+    #[test]
+    fn test_apply_inheritance_group_id() {
+        let parent = create_test_plugin("com.example", "parent-plugin", "1.0.0");
+        let mut child = create_test_plugin("", "child-plugin", "1.0.0");
+        child.group_id = None;
+
+        let merged = PluginCompatibility::apply_inheritance(&child, Some(&parent));
+        assert_eq!(merged.group_id, Some("com.example".to_string()));
+    }
+
+    #[test]
+    fn test_apply_inheritance_dependencies() {
+        let mut parent = create_test_plugin("com.example", "parent-plugin", "1.0.0");
+        parent.dependencies = Some(vec![
+            Dependency {
+                group_id: "com.example".to_string(),
+                artifact_id: "dep1".to_string(),
+                version: Some("1.0.0".to_string()),
+                scope: None,
+                optional: None,
+                type_: None,
+                classifier: None,
+                exclusions: None,
+            }
+        ]);
+
+        let child = create_test_plugin("com.example", "child-plugin", "1.0.0");
+        let merged = PluginCompatibility::apply_inheritance(&child, Some(&parent));
+        
+        assert!(merged.dependencies.is_some());
+        assert_eq!(merged.dependencies.unwrap().len(), 1);
+    }
+
+    #[test]
+    fn test_create_compatibility_layer() {
+        let descriptor = PluginDescriptor {
+            group_id: "com.example".to_string(),
+            artifact_id: "test-plugin".to_string(),
+            version: "1.0.0".to_string(),
+            name: Some("Test Plugin".to_string()),
+            description: Some("A test plugin".to_string()),
+            goal_prefix: Some("test".to_string()),
+            goals: vec![],
+            dependencies: vec![],
+        };
+
+        let compatibility = PluginCompatibility::create_compatibility_layer(&descriptor).unwrap();
+        
+        assert_eq!(compatibility.get("plugin.groupId"), Some(&"com.example".to_string()));
+        assert_eq!(compatibility.get("plugin.artifactId"), Some(&"test-plugin".to_string()));
+        assert_eq!(compatibility.get("plugin.version"), Some(&"1.0.0".to_string()));
+        assert_eq!(compatibility.get("plugin.name"), Some(&"Test Plugin".to_string()));
+        assert_eq!(compatibility.get("plugin.description"), Some(&"A test plugin".to_string()));
+    }
+}
+

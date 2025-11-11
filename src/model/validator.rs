@@ -102,3 +102,148 @@ impl ModelValidator {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::model::Model;
+
+    fn create_valid_model() -> Model {
+        Model {
+            model_version: "4.0.0".to_string(),
+            group_id: "com.example".to_string(),
+            artifact_id: "myapp".to_string(),
+            version: "1.0.0".to_string(),
+            packaging: "jar".to_string(),
+            name: None,
+            description: None,
+            url: None,
+            inception_year: None,
+            organization: None,
+            licenses: None,
+            developers: None,
+            contributors: None,
+            modules: None,
+            parent: None,
+            dependencies: None,
+            dependency_management: None,
+            build: None,
+            profiles: None,
+            properties: None,
+            repositories: None,
+            plugin_repositories: None,
+            distribution_management: None,
+            reporting: None,
+        }
+    }
+
+    #[test]
+    fn test_validate_valid_model() {
+        let model = create_valid_model();
+        let errors = ModelValidator::validate(&model).unwrap();
+        assert!(errors.is_empty());
+    }
+
+    #[test]
+    fn test_validate_missing_group_id() {
+        let mut model = create_valid_model();
+        model.group_id = String::new();
+        
+        let errors = ModelValidator::validate(&model).unwrap();
+        assert!(!errors.is_empty());
+        assert!(errors.iter().any(|e| e.field == "groupId"));
+    }
+
+    #[test]
+    fn test_validate_missing_artifact_id() {
+        let mut model = create_valid_model();
+        model.artifact_id = String::new();
+        
+        let errors = ModelValidator::validate(&model).unwrap();
+        assert!(!errors.is_empty());
+        assert!(errors.iter().any(|e| e.field == "artifactId"));
+    }
+
+    #[test]
+    fn test_validate_missing_version() {
+        let mut model = create_valid_model();
+        model.version = String::new();
+        
+        let errors = ModelValidator::validate(&model).unwrap();
+        assert!(!errors.is_empty());
+        assert!(errors.iter().any(|e| e.field == "version"));
+    }
+
+    #[test]
+    fn test_validate_invalid_model_version() {
+        let mut model = create_valid_model();
+        model.model_version = "3.0.0".to_string();
+        
+        let errors = ModelValidator::validate(&model).unwrap();
+        assert!(!errors.is_empty());
+        assert!(errors.iter().any(|e| e.field == "modelVersion"));
+    }
+
+    #[test]
+    fn test_validate_invalid_group_id_format() {
+        let mut model = create_valid_model();
+        model.group_id = "invalid..group".to_string();
+        
+        let errors = ModelValidator::validate(&model).unwrap();
+        assert!(!errors.is_empty());
+        assert!(errors.iter().any(|e| e.field == "groupId"));
+    }
+
+    #[test]
+    fn test_validate_invalid_artifact_id_format() {
+        let mut model = create_valid_model();
+        model.artifact_id = "invalid@artifact".to_string();
+        
+        let errors = ModelValidator::validate(&model).unwrap();
+        assert!(!errors.is_empty());
+        assert!(errors.iter().any(|e| e.field == "artifactId"));
+    }
+
+    #[test]
+    fn test_validate_valid_group_id_format() {
+        assert!(ModelValidator::is_valid_group_id("com.example"));
+        assert!(ModelValidator::is_valid_group_id("org.apache.maven"));
+        assert!(ModelValidator::is_valid_group_id("com.example-test"));
+        assert!(ModelValidator::is_valid_group_id("com.example_test"));
+    }
+
+    #[test]
+    fn test_validate_invalid_group_id_patterns() {
+        assert!(!ModelValidator::is_valid_group_id(""));
+        assert!(!ModelValidator::is_valid_group_id("com..example"));
+        assert!(!ModelValidator::is_valid_group_id("com.example@test"));
+    }
+
+    #[test]
+    fn test_validate_valid_artifact_id_format() {
+        assert!(ModelValidator::is_valid_artifact_id("myapp"));
+        assert!(ModelValidator::is_valid_artifact_id("my-app"));
+        assert!(ModelValidator::is_valid_artifact_id("my_app"));
+        assert!(ModelValidator::is_valid_artifact_id("my.app"));
+    }
+
+    #[test]
+    fn test_validate_invalid_artifact_id_patterns() {
+        assert!(!ModelValidator::is_valid_artifact_id(""));
+        assert!(!ModelValidator::is_valid_artifact_id("my@app"));
+    }
+
+    #[test]
+    fn test_validate_or_error_valid() {
+        let model = create_valid_model();
+        assert!(ModelValidator::validate_or_error(&model).is_ok());
+    }
+
+    #[test]
+    fn test_validate_or_error_invalid() {
+        let mut model = create_valid_model();
+        model.group_id = String::new();
+        
+        assert!(ModelValidator::validate_or_error(&model).is_err());
+    }
+}
+

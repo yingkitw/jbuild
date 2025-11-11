@@ -98,6 +98,6 @@ impl Default for MavenExecutionResult {
 /// Maven execution engine
 pub trait Maven {
     /// Execute a Maven build
-    fn execute(&mut self, request: MavenExecutionRequest) -> anyhow::Result<MavenExecutionResult>;
+    fn execute(&self, request: MavenExecutionRequest) -> anyhow::Result<MavenExecutionResult>;
 }
 

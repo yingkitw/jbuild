@@ -251,3 +251,135 @@ impl ProfileActivator {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::model::profile::{Profile, Activation};
+
+    fn create_test_profile(id: &str) -> Profile {
+        Profile {
+            id: id.to_string(),
+            activation: None,
+            build: None,
+            dependencies: None,
+            dependency_management: None,
+            properties: None,
+            repositories: None,
+            plugin_repositories: None,
+        }
+    }
+
+    #[test]
+    fn test_profile_explicit_activation() {
+        let profile = create_test_profile("test-profile");
+        let mut context = ProfileActivationContext::new();
+        context.active_profile_ids = vec!["test-profile".to_string()];
+        
+        assert!(ProfileActivator::is_active(&profile, &context));
+    }
+
+    #[test]
+    fn test_profile_explicit_deactivation() {
+        let profile = create_test_profile("test-profile");
+        let mut context = ProfileActivationContext::new();
+        context.inactive_profile_ids = vec!["test-profile".to_string()];
+        
+        assert!(!ProfileActivator::is_active(&profile, &context));
+    }
+
+    #[test]
+    fn test_profile_active_by_default() {
+        let mut profile = create_test_profile("test-profile");
+        profile.activation = Some(Activation {
+            active_by_default: Some(true),
+            jdk: None,
+            os: None,
+            property: None,
+            file: None,
+        });
+        let context = ProfileActivationContext::new();
+        
+        assert!(ProfileActivator::is_active(&profile, &context));
+    }
+
+    #[test]
+    fn test_profile_property_activation() {
+        let mut profile = create_test_profile("test-profile");
+        profile.activation = Some(Activation {
+            active_by_default: None,
+            jdk: None,
+            os: None,
+            property: Some(ActivationProperty {
+                name: Some("test.property".to_string()),
+                value: Some("test-value".to_string()),
+            }),
+            file: None,
+        });
+        
+        let mut context = ProfileActivationContext::new();
+        let mut props = HashMap::new();
+        props.insert("test.property".to_string(), "test-value".to_string());
+        context.user_properties = props;
+        
+        assert!(ProfileActivator::is_active(&profile, &context));
+    }
+
+    #[test]
+    fn test_profile_property_activation_mismatch() {
+        let mut profile = create_test_profile("test-profile");
+        profile.activation = Some(Activation {
+            active_by_default: None,
+            jdk: None,
+            os: None,
+            property: Some(ActivationProperty {
+                name: Some("test.property".to_string()),
+                value: Some("test-value".to_string()),
+            }),
+            file: None,
+        });
+        
+        let mut context = ProfileActivationContext::new();
+        let mut props = HashMap::new();
+        props.insert("test.property".to_string(), "wrong-value".to_string());
+        context.user_properties = props;
+        
+        assert!(!ProfileActivator::is_active(&profile, &context));
+    }
+
+    #[test]
+    fn test_profile_os_activation() {
+        let mut profile = create_test_profile("test-profile");
+        profile.activation = Some(Activation {
+            active_by_default: None,
+            jdk: None,
+            os: Some(ActivationOS {
+                name: Some(std::env::consts::OS.to_string()),
+                family: None,
+                arch: None,
+                version: None,
+            }),
+            property: None,
+            file: None,
+        });
+        
+        let context = ProfileActivationContext::new();
+        assert!(ProfileActivator::is_active(&profile, &context));
+    }
+
+    #[test]
+    fn test_get_active_profiles() {
+        let profiles = vec![
+            create_test_profile("profile1"),
+            create_test_profile("profile2"),
+            create_test_profile("profile3"),
+        ];
+        
+        let mut context = ProfileActivationContext::new();
+        context.active_profile_ids = vec!["profile1".to_string(), "profile3".to_string()];
+        
+        let active = ProfileActivator::get_active_profiles(&profiles, &context);
+        assert_eq!(active.len(), 2);
+        assert!(active.iter().any(|p| p.id == "profile1"));
+        assert!(active.iter().any(|p| p.id == "profile3"));
+    }
+}

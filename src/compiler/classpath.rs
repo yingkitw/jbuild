@@ -71,3 +71,83 @@ impl fmt::Display for ClasspathBuilder {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_classpath_builder_new() {
+        let builder = ClasspathBuilder::new();
+        assert!(builder.is_empty());
+        assert_eq!(builder.entries().len(), 0);
+    }
+
+    #[test]
+    fn test_classpath_builder_add_entry() {
+        let builder = ClasspathBuilder::new()
+            .add_entry(PathBuf::from("/path/to/classes"));
+        
+        assert!(!builder.is_empty());
+        assert_eq!(builder.entries().len(), 1);
+    }
+
+    #[test]
+    fn test_classpath_builder_add_jar() {
+        let builder = ClasspathBuilder::new()
+            .add_jar(PathBuf::from("/path/to/lib.jar"));
+        
+        assert_eq!(builder.entries().len(), 1);
+    }
+
+    #[test]
+    fn test_classpath_builder_add_directory() {
+        let builder = ClasspathBuilder::new()
+            .add_directory(PathBuf::from("/path/to/classes"));
+        
+        assert_eq!(builder.entries().len(), 1);
+    }
+
+    #[test]
+    fn test_classpath_builder_add_entries() {
+        let builder = ClasspathBuilder::new()
+            .add_entries(vec![
+                PathBuf::from("/path/to/classes"),
+                PathBuf::from("/path/to/lib.jar"),
+            ]);
+        
+        assert_eq!(builder.entries().len(), 2);
+    }
+
+    #[test]
+    fn test_classpath_builder_build() {
+        let builder = ClasspathBuilder::new()
+            .add_entry(PathBuf::from("/path/to/classes"))
+            .add_jar(PathBuf::from("/path/to/lib.jar"));
+        
+        let classpath = builder.build();
+        let separator = if cfg!(windows) { ";" } else { ":" };
+        assert!(classpath.contains(separator));
+        assert!(classpath.contains("/path/to/classes"));
+        assert!(classpath.contains("/path/to/lib.jar"));
+    }
+
+    #[test]
+    fn test_classpath_builder_display() {
+        let builder = ClasspathBuilder::new()
+            .add_entry(PathBuf::from("/path/to/classes"));
+        
+        let display = format!("{}", builder);
+        assert!(!display.is_empty());
+    }
+
+    #[test]
+    fn test_classpath_builder_chaining() {
+        let builder = ClasspathBuilder::new()
+            .add_entry(PathBuf::from("/path1"))
+            .add_jar(PathBuf::from("/path2.jar"))
+            .add_directory(PathBuf::from("/path3"));
+        
+        assert_eq!(builder.entries().len(), 3);
+    }
+}
+

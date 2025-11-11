@@ -74,9 +74,6 @@ The Rust implementation is organized as a **single crate** with all modules unde
 - ✅ **ArtifactDownloader** - Downloads artifacts from remote repositories via HTTP
 - ✅ **GoalParser** - Parses Maven goals and maps them to lifecycle phases
 - ✅ **EffectiveModelBuilder** - Builds effective POM with parent resolution and inheritance
-- ✅ **PluginLoader** - Loads plugins from local repository and extracts plugin descriptors from JAR files
-- ✅ **PluginRegistry** - Manages loaded plugins with caching
-- ✅ **Enhanced MojoExecutor** - Integrated with plugin registry to load and validate plugin descriptors
 
 ## Status
 

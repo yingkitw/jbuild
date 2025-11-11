@@ -124,12 +124,12 @@ fn main() -> anyhow::Result<()> {
     info!("Goals: {:?}", request.goals);
 
     // Execute Maven build
-    let mut maven = DefaultMaven::new();
+    let maven = DefaultMaven::new();
     match maven.execute(request) {
         Ok(result) => {
             if result.success {
                 println!("[INFO] BUILD SUCCESS");
-                Ok(())
+    Ok(())
             } else {
                 eprintln!("[ERROR] BUILD FAILURE");
                 for exception in &result.exceptions {

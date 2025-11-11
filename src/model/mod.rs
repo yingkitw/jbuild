@@ -12,7 +12,7 @@ pub mod profile_activator;
 pub mod interpolation;
 pub mod validator;
 
-pub use model::{Model, Organization, License, Developer, Contributor, Reporting, ReportingPlugin};
+pub use model::{Model, Organization, License, Developer, Contributor, Reporting, ReportingPlugin, Dependencies};
 pub use parent::Parent;
 pub use dependency::{Dependency, Exclusion};
 pub use build::{Build, Extension, Resource, Plugin, Execution, PluginManagement};
