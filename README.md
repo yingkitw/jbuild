@@ -63,6 +63,63 @@ cargo build --release --features jni
 cargo run --bin mvn -- [maven-args]
 ```
 
+## Testing
+
+The project includes comprehensive unit tests and integration tests:
+
+```bash
+# Run all tests
+cargo test
+
+# Run only unit tests
+cargo test --lib
+
+# Run integration tests
+cargo test --test example_project
+
+# Run with output
+cargo test -- --nocapture
+```
+
+### Test Structure
+
+- **Unit tests**: Located in `src/` modules with `#[test]` attributes
+- **Integration tests**: Located in `tests/` directory
+- **Mocks and fixtures**: `src/testing_utils.rs` provides mock implementations for testing
+
+### Testing Utilities
+
+The codebase provides several testing utilities in `testing_utils`:
+
+- `MockArtifactRepository`: In-memory artifact repository for testing
+- `MockDependencyResolver`: Mock dependency resolver for controlled testing
+- `TestProjectBuilder`: Fluent builder for creating test projects
+
+Example usage:
+
+```rust
+use mvn_rs::{MockArtifactRepository, ArtifactRepository};
+
+#[test]
+fn test_artifact_resolution() {
+    let repo = MockArtifactRepository::new();
+    repo.add_artifact("com.example", "lib", "1.0.0", "/path/to/lib.jar".to_string());
+    
+    assert!(repo.exists("com.example", "lib", "1.0.0"));
+}
+```
+
+## Architecture & Design
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed architecture documentation.
+
+### Key Design Patterns
+
+- **Trait-based abstractions**: Core components use traits for testability
+- **Builder patterns**: Complex objects use fluent builders
+- **Custom error types**: Comprehensive error handling with `MavenError`
+- **Dependency injection**: Supports mock implementations for testing
+
 ## License
 
 Licensed under the Apache License, Version 2.0.

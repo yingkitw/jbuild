@@ -7,6 +7,8 @@ pub mod plugin_api;
 pub mod compiler;
 pub mod packaging;
 pub mod testing;
+pub mod error;
+pub mod testing_utils;
 
 // Re-export commonly used types without glob imports to avoid conflicts
 pub use model::{Model, Dependency, Build, Profile as ModelProfile, Repository as ModelRepository};
@@ -15,4 +17,6 @@ pub use core::{MavenExecutionRequest, MavenExecutionResult, MavenProject, MavenS
 pub use resolver::{DependencyResolver, RemoteRepository};
 pub use settings::{Settings, Profile as SettingsProfile, Server, Mirror};
 pub use plugin_api::{Mojo, Plugin, PluginDescriptor};
+pub use error::{MavenError, MavenResult};
+pub use testing_utils::{MockArtifactRepository, MockDependencyResolver, TestProjectBuilder};
 

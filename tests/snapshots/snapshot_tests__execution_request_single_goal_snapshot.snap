@@ -1,0 +1,18 @@
+---
+source: tests/snapshot_tests.rs
+assertion_line: 47
+expression: request
+---
+MavenExecutionRequest {
+    base_directory: "/project",
+    goals: [
+        "install",
+    ],
+    active_profiles: [],
+    system_properties: {},
+    user_properties: {},
+    show_errors: false,
+    reactor_active: true,
+    settings: None,
+    pom_file: None,
+}

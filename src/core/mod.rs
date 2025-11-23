@@ -11,6 +11,8 @@ pub mod graph_builder;
 pub mod lifecycle_executor;
 pub mod goal_parser;
 pub mod optimization;
+pub mod traits;
+pub mod builders;
 
 pub use execution::*;
 pub use lifecycle::*;
@@ -25,4 +27,6 @@ pub use graph_builder::*;
 pub use lifecycle_executor::*;
 pub use goal_parser::*;
 pub use optimization::*;
+pub use traits::*;
+pub use builders::*;
 

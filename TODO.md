@@ -35,6 +35,17 @@ This file tracks the remaining work items for the Maven to Rust migration.
 
 None currently.
 
+## Recent Improvements ✨
+
+### Code Quality & Architecture (Nov 2025)
+- [x] **Custom Error Types** - Created `MavenError` enum for better error handling
+- [x] **Trait-Based Design** - Added traits for testability: `ProjectBuildStrategy`, `LifecycleExecutionStrategy`, `DependencyResolutionStrategy`, `ArtifactRepository`
+- [x] **Builder Patterns** - Implemented `ExecutionRequestBuilder` for fluent API
+- [x] **Testing Utilities** - Created `MockArtifactRepository`, `MockDependencyResolver`, `TestProjectBuilder`
+- [x] **Unit Tests** - Added 12 comprehensive unit tests with mocks
+- [x] **Snapshot Tests** - Added insta snapshot tests for complex outputs
+- [x] **Documentation** - Updated README with testing guidelines and architecture patterns
+
 ## Pending 📋
 
 ### High Priority

@@ -166,6 +166,35 @@ MavenExecutionResult
 - `glob` - Pattern matching for resource filtering
 - `jni` - JNI for Java integration (optional feature)
 
+## Testing & Testability
+
+### Trait-Based Design
+The codebase uses trait-based abstractions to enable dependency injection and testing:
+
+- `ProjectBuildStrategy`: Trait for building Maven projects
+- `LifecycleExecutionStrategy`: Trait for executing lifecycle phases
+- `DependencyResolutionStrategy`: Trait for resolving dependencies
+- `ArtifactRepository`: Trait for artifact repository operations
+
+### Testing Utilities
+Located in `src/testing_utils.rs`:
+
+- `MockArtifactRepository`: In-memory artifact repository for isolated testing
+- `MockDependencyResolver`: Mock dependency resolver with configurable behavior
+- `TestProjectBuilder`: Fluent builder for creating test projects
+
+### Builder Patterns
+Complex objects use fluent builders for easier construction:
+
+- `ExecutionRequestBuilder`: Builds `MavenExecutionRequest` with fluent API
+
+### Error Handling
+Custom error types in `src/error.rs` provide:
+
+- Specific error variants for different failure modes
+- Better error messages and context
+- Conversion from standard library errors
+
 ## Future Architecture Considerations
 
 1. **Plugin System**: Full Java plugin execution
@@ -177,6 +206,7 @@ MavenExecutionResult
 4. **Incremental Compilation**: Track file changes for faster rebuilds
 5. **Annotation Processing**: Support for Java annotation processors
 6. **Test Execution**: Integration with JUnit/TestNG test runners
+7. **Deterministic Snapshots**: Use `IndexMap` for deterministic HashMap ordering in snapshot tests
 
 ## Performance Considerations
 
