@@ -64,6 +64,44 @@ impl LifecyclePhase {
         vec![LifecyclePhase::Clean]
     }
 
+    /// Get the order/index of this phase in the lifecycle
+    pub fn order(&self) -> usize {
+        match self {
+            LifecyclePhase::Validate => 0,
+            LifecyclePhase::Initialize => 1,
+            LifecyclePhase::GenerateSources => 2,
+            LifecyclePhase::ProcessSources => 3,
+            LifecyclePhase::GenerateResources => 4,
+            LifecyclePhase::ProcessResources => 5,
+            LifecyclePhase::Compile => 6,
+            LifecyclePhase::ProcessClasses => 7,
+            LifecyclePhase::GenerateTestSources => 8,
+            LifecyclePhase::ProcessTestSources => 9,
+            LifecyclePhase::GenerateTestResources => 10,
+            LifecyclePhase::ProcessTestResources => 11,
+            LifecyclePhase::TestCompile => 12,
+            LifecyclePhase::ProcessTestClasses => 13,
+            LifecyclePhase::Test => 14,
+            LifecyclePhase::PreparePackage => 15,
+            LifecyclePhase::Package => 16,
+            LifecyclePhase::PreIntegrationTest => 17,
+            LifecyclePhase::IntegrationTest => 18,
+            LifecyclePhase::PostIntegrationTest => 19,
+            LifecyclePhase::Verify => 20,
+            LifecyclePhase::Install => 21,
+            LifecyclePhase::Deploy => 22,
+            LifecyclePhase::Clean => 100, // Clean is separate lifecycle
+        }
+    }
+
+    /// Get all phases up to and including the target phase
+    pub fn phases_up_to(target: &LifecyclePhase) -> Vec<LifecyclePhase> {
+        let target_order = target.order();
+        Self::all().into_iter()
+            .filter(|p| p.order() <= target_order)
+            .collect()
+    }
+
     /// Parse a lifecycle phase from string
     pub fn from_str(s: &str) -> Option<Self> {
         match s {

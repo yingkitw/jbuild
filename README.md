@@ -34,18 +34,6 @@ The tool aims to provide faster builds through Rust's performance while maintain
 4. **Modern Architecture**: Async I/O, parallel execution, trait-based design
 5. **Cross-Platform**: Native binaries for all major platforms
 
-### When to Use Each Tool
-
-| Use Case | Recommended Tool |
-|----------|------------------|
-| New projects prioritizing build speed | jbuild |
-| Existing Maven projects | jbuild or Maven |
-| Existing Gradle projects | jbuild or Gradle |
-| Complex plugin requirements | Maven or Gradle |
-| CI/CD with memory constraints | jbuild |
-| Android development | Gradle |
-| Enterprise with existing tooling | Maven or Gradle |
-
 ## Project Structure
 
 The project is organized as a **single crate** with all modules under `src/`:
@@ -89,7 +77,7 @@ This is an ongoing project. Both Maven and Gradle support are implemented with s
 - ✅ **Build system detection and unified CLI**
 - ✅ **Gradle dependency resolution** (integrated with shared resolver)
 - ✅ **Multi-project builds** (settings.gradle support)
-- ✅ **148 tests passing** (unit, integration, multi-module)
+- ✅ **218 tests passing** (unit, integration, multi-module)
 
 See [TODO.md](TODO.md) for the current list of remaining work items and [MIGRATION.md](MIGRATION.md) for migration details.
 

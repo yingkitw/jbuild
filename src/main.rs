@@ -2,7 +2,7 @@ use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 use tracing::info;
 
-use jbuild::build::{BuildSystem, BuildExecutor, ExecutionRequest};
+use jbuild::build::{BuildSystem, BuildExecutor, ExecutionRequest, BuildWrapper, GoalMapper};
 use jbuild::maven::core::MavenBuildExecutor;
 use jbuild::gradle::core::GradleExecutor;
 
@@ -10,10 +10,14 @@ use jbuild::gradle::core::GradleExecutor;
 #[derive(Parser)]
 #[command(name = "jbuild")]
 #[command(version = "0.1.0")]
-#[command(about = "jbuild - High-performance Java build tool", long_about = None)]
+#[command(about = "jbuild - High-performance Java build tool supporting Maven and Gradle", long_about = None)]
 struct Cli {
     #[command(subcommand)]
     command: Option<Commands>,
+
+    /// Goals/tasks to execute (e.g., clean compile test)
+    #[arg(trailing_var_arg = true)]
+    goals: Vec<String>,
 
     /// Define a system property
     #[arg(short = 'D', long = "define", value_name = "PROPERTY")]
@@ -35,7 +39,7 @@ struct Cli {
     #[arg(long = "show-errors")]
     show_errors: bool,
 
-    /// Suppress Maven output
+    /// Suppress output
     #[arg(short = 'q', long = "quiet")]
     quiet: bool,
 
@@ -47,9 +51,13 @@ struct Cli {
     #[arg(short = 'e', long = "errors")]
     errors: bool,
 
-    /// File path to the POM file
+    /// File path to the build file (pom.xml or build.gradle)
     #[arg(short = 'f', long = "file", value_name = "FILE")]
     file: Option<PathBuf>,
+
+    /// Use wrapper (mvnw/gradlew) if available
+    #[arg(long = "use-wrapper")]
+    use_wrapper: bool,
 }
 
 #[derive(Subcommand)]
@@ -68,6 +76,10 @@ enum Commands {
     Deploy,
     /// Clean the project
     Clean,
+    /// Build the project (compile + test + package)
+    Build,
+    /// Run the application (Gradle only)
+    Run,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -94,18 +106,47 @@ fn main() -> anyhow::Result<()> {
     
     info!("Detected build system: {:?}", build_system);
 
-    // Determine goals from command
-    let goals = match &cli.command {
-        Some(Commands::Validate) => vec!["validate".to_string()],
-        Some(Commands::Compile) => vec!["compile".to_string()],
-        Some(Commands::Test) => vec!["test".to_string()],
-        Some(Commands::Package) => vec!["package".to_string()],
-        Some(Commands::Install) => vec!["install".to_string()],
-        Some(Commands::Deploy) => vec!["deploy".to_string()],
-        Some(Commands::Clean) => vec!["clean".to_string()],
-        None => {
-            // Default to compile if no command specified
-            vec!["compile".to_string()]
+    // Check for wrapper if requested
+    if cli.use_wrapper {
+        if let Some(wrapper) = BuildWrapper::detect(&base_dir) {
+            info!("Using wrapper: {:?}", wrapper.script_path);
+            if let Some(version) = wrapper.get_version() {
+                info!("Wrapper version: {}", version);
+            }
+        }
+    }
+
+    // Determine goals from command or arguments
+    let goals = if !cli.goals.is_empty() {
+        cli.goals.clone()
+    } else {
+        match &cli.command {
+            Some(Commands::Validate) => vec!["validate".to_string()],
+            Some(Commands::Compile) => vec!["compile".to_string()],
+            Some(Commands::Test) => vec!["test".to_string()],
+            Some(Commands::Package) => vec!["package".to_string()],
+            Some(Commands::Install) => vec!["install".to_string()],
+            Some(Commands::Deploy) => vec!["deploy".to_string()],
+            Some(Commands::Clean) => vec!["clean".to_string()],
+            Some(Commands::Build) => vec!["build".to_string()],
+            Some(Commands::Run) => vec!["run".to_string()],
+            None => vec!["compile".to_string()],
+        }
+    };
+
+    // Map goals to appropriate build system tasks
+    let goal_mapper = GoalMapper::new();
+    let mapped_goals = match build_system {
+        BuildSystem::Maven => goals.clone(), // Keep Maven goals as-is
+        BuildSystem::Gradle => {
+            // Convert Maven-style goals to Gradle tasks if needed
+            goals.iter().map(|g| {
+                if GoalMapper::is_lifecycle_phase(g) {
+                    goal_mapper.maven_to_gradle(g).first().cloned().unwrap_or_else(|| g.clone())
+                } else {
+                    g.clone()
+                }
+            }).collect()
         }
     };
 
@@ -120,7 +161,7 @@ fn main() -> anyhow::Result<()> {
     // Create generic execution request
     let request = ExecutionRequest {
         base_directory: base_dir.clone(),
-        goals,
+        goals: mapped_goals.clone(),
         system_properties,
         show_errors: cli.show_errors,
         offline: cli.offline,
@@ -130,6 +171,9 @@ fn main() -> anyhow::Result<()> {
     info!("Build system: {:?}", build_system);
     info!("Base directory: {:?}", request.base_directory);
     info!("Goals: {:?}", request.goals);
+    if goals != mapped_goals {
+        info!("Mapped from: {:?}", goals);
+    }
 
     // Execute build based on detected system
     let executor: Box<dyn BuildExecutor> = match build_system {

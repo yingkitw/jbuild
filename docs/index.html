@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>jbuild Documentation</title>
+    <style>
+        :root {
+            --cds-ui-background: #ffffff;
+            --cds-ui-01: #f4f4f4;
+            --cds-ui-02: #e0e0e0;
+            --cds-text-01: #161616;
+            --cds-text-02: #525252;
+            --cds-link-01: #0f62fe;
+            --cds-interactive-01: #0f62fe;
+            --cds-support-01: #da1e28;
+            --cds-support-02: #24a148;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--cds-ui-background);
+            color: var(--cds-text-01);
+            line-height: 1.5;
+        }
+        .header {
+            background: var(--cds-text-01);
+            color: white;
+            padding: 1rem 2rem;
+        }
+        .header h1 { font-weight: 400; font-size: 1.25rem; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .hero {
+            background: var(--cds-ui-01);
+            padding: 3rem 2rem;
+            margin-bottom: 2rem;
+        }
+        .hero h2 { font-size: 2.5rem; font-weight: 300; margin-bottom: 1rem; }
+        .hero p { font-size: 1.25rem; color: var(--cds-text-02); max-width: 600px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; }
+        .card {
+            background: var(--cds-ui-01);
+            padding: 1.5rem;
+            border-left: 4px solid var(--cds-interactive-01);
+        }
+        .card h3 { font-size: 1.25rem; margin-bottom: 0.5rem; }
+        .card p { color: var(--cds-text-02); margin-bottom: 1rem; }
+        .card a {
+            color: var(--cds-link-01);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .card a:hover { text-decoration: underline; }
+        .stats {
+            display: flex;
+            gap: 2rem;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+        .stat {
+            text-align: center;
+            padding: 1rem 2rem;
+            background: var(--cds-ui-01);
+        }
+        .stat-value { font-size: 2.5rem; font-weight: 300; color: var(--cds-interactive-01); }
+        .stat-label { color: var(--cds-text-02); font-size: 0.875rem; }
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            border-radius: 2px;
+            margin-right: 0.5rem;
+        }
+        .badge-success { background: var(--cds-support-02); color: white; }
+        .badge-info { background: var(--cds-interactive-01); color: white; }
+        footer {
+            margin-top: 3rem;
+            padding: 2rem;
+            background: var(--cds-ui-01);
+            text-align: center;
+            color: var(--cds-text-02);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>jbuild</h1>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <h2>High-Performance Java Build Tool</h2>
+            <p>A Rust implementation supporting both Maven and Gradle, delivering faster builds through native performance.</p>
+        </div>
+    </section>
+
+    <main class="container">
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value">218</div>
+                <div class="stat-label">Tests Passing</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">96%</div>
+                <div class="stat-label">Maven Coverage</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">92%</div>
+                <div class="stat-label">Gradle Coverage</div>
+            </div>
+        </div>
+
+        <h2 style="margin-bottom: 1rem;">Documentation</h2>
+        <div class="grid">
+            <div class="card">
+                <h3>README</h3>
+                <p>Project overview, installation, and quick start guide.</p>
+                <a href="../README.md">View README →</a>
+            </div>
+            <div class="card">
+                <h3>Architecture</h3>
+                <p>System design, module structure, and architectural decisions.</p>
+                <a href="../ARCHITECTURE.md">View Architecture →</a>
+            </div>
+            <div class="card">
+                <h3>TODO</h3>
+                <p>Current progress, completed features, and pending work.</p>
+                <a href="../TODO.md">View TODO →</a>
+            </div>
+            <div class="card">
+                <h3>Migration Guide</h3>
+                <p>Details on migrating from Maven/Gradle to jbuild.</p>
+                <a href="../MIGRATION.md">View Migration →</a>
+            </div>
+        </div>
+
+        <h2 style="margin: 2rem 0 1rem;">Implementation Details</h2>
+        <div class="grid">
+            <div class="card">
+                <span class="badge badge-success">Complete</span>
+                <h3>Gradle Implementation</h3>
+                <p>Gradle support details including task execution and DSL parsing.</p>
+                <a href="GRADLE_IMPLEMENTATION.md">View Details →</a>
+            </div>
+            <div class="card">
+                <span class="badge badge-info">Reference</span>
+                <h3>Gradle Learnings</h3>
+                <p>Architectural patterns learned from studying Gradle source.</p>
+                <a href="GRADLE_LEARNINGS.md">View Learnings →</a>
+            </div>
+            <div class="card">
+                <span class="badge badge-success">Complete</span>
+                <h3>Improvements</h3>
+                <p>Code quality improvements and architectural enhancements.</p>
+                <a href="IMPROVEMENTS.md">View Improvements →</a>
+            </div>
+            <div class="card">
+                <span class="badge badge-info">Reference</span>
+                <h3>Organization</h3>
+                <p>Codebase organization and directory structure.</p>
+                <a href="ORGANIZATION.md">View Organization →</a>
+            </div>
+        </div>
+
+        <h2 style="margin: 2rem 0 1rem;">Key Features</h2>
+        <div class="grid">
+            <div class="card">
+                <h3>Maven Support</h3>
+                <p>Full POM parsing, lifecycle execution, dependency resolution, and plugin system.</p>
+            </div>
+            <div class="card">
+                <h3>Gradle Support</h3>
+                <p>Build script parsing, task graph, configurations, version catalogs, and toolchains.</p>
+            </div>
+            <div class="card">
+                <h3>Unified CLI</h3>
+                <p>Single binary supporting both build systems with automatic detection.</p>
+            </div>
+            <div class="card">
+                <h3>Performance</h3>
+                <p>Native Rust binary with async I/O, parallel execution, and build caching.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>jbuild - Built with Rust 🦀</p>
+    </footer>
+</body>
+</html>

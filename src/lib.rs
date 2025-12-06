@@ -2,6 +2,7 @@
 pub mod build;
 
 // Shared/common functionality
+pub mod common;
 pub mod artifact;
 pub mod resolver;
 pub mod compiler;
