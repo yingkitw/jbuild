@@ -1,0 +1,22 @@
+// Application module build.gradle
+
+plugins {
+    id 'application'
+}
+
+description = 'Main application'
+
+dependencies {
+    implementation project(':api')
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.3'
+}
+
+application {
+    mainClass = 'com.example.app.Main'
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'com.example.app.Main'
+    }
+}

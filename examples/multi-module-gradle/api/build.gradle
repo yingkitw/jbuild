@@ -1,0 +1,11 @@
+// API module build.gradle
+
+plugins {
+    id 'java-library'
+}
+
+description = 'Public API interfaces'
+
+dependencies {
+    api project(':core')
+}

@@ -13,6 +13,7 @@ pub mod goal_parser;
 pub mod optimization;
 pub mod traits;
 pub mod builders;
+pub mod unit_of_work;
 
 pub use execution::*;
 pub use lifecycle::*;
@@ -29,4 +30,5 @@ pub use goal_parser::*;
 pub use optimization::*;
 pub use traits::*;
 pub use builders::*;
+pub use unit_of_work::*;
 

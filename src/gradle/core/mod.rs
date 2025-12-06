@@ -2,12 +2,12 @@
 //! 
 //! Implements task execution and build lifecycle for Gradle projects.
 
-use std::collections::HashMap;
 use std::path::PathBuf;
 use anyhow::{Context, Result};
 use crate::build::{BuildExecutor, BuildSystem, ExecutionRequest, ExecutionResult};
-use crate::gradle::model::{GradleProject, Task};
+use crate::gradle::model::GradleProject;
 use crate::gradle::parse_gradle_build_script;
+use crate::gradle::settings::{GradleSettings, find_settings_file, parse_settings_file};
 
 /// Gradle executor implementation
 pub struct GradleExecutor;
@@ -311,11 +311,114 @@ impl GradleExecutor {
         
         Ok(None)
     }
+
+    /// Load settings for a multi-project build
+    pub fn load_settings(&self, base_dir: &PathBuf) -> Result<Option<GradleSettings>> {
+        if let Some(settings_file) = find_settings_file(base_dir) {
+            let settings = parse_settings_file(&settings_file, base_dir)
+                .with_context(|| format!("Failed to parse settings file: {:?}", settings_file))?;
+            Ok(Some(settings))
+        } else {
+            Ok(None)
+        }
+    }
+
+    /// Load all projects in a multi-project build
+    pub fn load_multi_project(&self, base_dir: &PathBuf) -> Result<Vec<GradleProject>> {
+        let settings = self.load_settings(base_dir)?;
+
+        match settings {
+            Some(settings) if settings.is_multi_project() => {
+                let mut projects = Vec::new();
+
+                // Load root project if it has a build file
+                if base_dir.join("build.gradle").exists() || base_dir.join("build.gradle.kts").exists() {
+                    if let Ok(root_project) = self.load_project(base_dir) {
+                        projects.push(root_project);
+                    }
+                }
+
+                // Load subprojects
+                for subproject in &settings.subprojects {
+                    let subproject_dir = subproject.directory(base_dir);
+                    if subproject_dir.exists() {
+                        match self.load_project(&subproject_dir) {
+                            Ok(mut project) => {
+                                // Set project name from settings
+                                project.name = subproject.name().to_string();
+                                projects.push(project);
+                            }
+                            Err(e) => {
+                                tracing::warn!(
+                                    "Failed to load subproject {}: {}",
+                                    subproject.path,
+                                    e
+                                );
+                            }
+                        }
+                    }
+                }
+
+                Ok(projects)
+            }
+            _ => {
+                // Single project build
+                let project = self.load_project(base_dir)?;
+                Ok(vec![project])
+            }
+        }
+    }
+
+    /// Execute tasks on all projects in a multi-project build
+    fn execute_multi_project(&self, base_dir: &PathBuf, tasks: &[String]) -> Result<ExecutionResult> {
+        let projects = self.load_multi_project(base_dir)?;
+
+        let mut all_errors = Vec::new();
+        let mut all_success = true;
+
+        for project in &projects {
+            tracing::info!("Executing tasks for project: {}", project.name);
+
+            for task in tasks {
+                match self.execute_task(project, task) {
+                    Ok(()) => {
+                        tracing::info!(
+                            "Successfully executed task '{}' for project '{}'",
+                            task,
+                            project.name
+                        );
+                    }
+                    Err(e) => {
+                        let error_msg = format!(
+                            "Failed to execute task '{}' for project '{}': {}",
+                            task, project.name, e
+                        );
+                        all_errors.push(error_msg);
+                        all_success = false;
+                    }
+                }
+            }
+        }
+
+        Ok(ExecutionResult {
+            success: all_success,
+            errors: all_errors,
+        })
+    }
 }
 
 impl BuildExecutor for GradleExecutor {
     fn execute(&self, request: ExecutionRequest) -> Result<ExecutionResult> {
-        // Load the Gradle project
+        // Check if this is a multi-project build
+        if let Some(settings_file) = find_settings_file(&request.base_directory) {
+            if let Ok(settings) = parse_settings_file(&settings_file, &request.base_directory) {
+                if settings.is_multi_project() {
+                    return self.execute_multi_project(&request.base_directory, &request.goals);
+                }
+            }
+        }
+
+        // Single project build
         let project = self.load_project(&request.base_directory)?;
 
         let mut errors = Vec::new();

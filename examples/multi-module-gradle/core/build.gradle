@@ -1,0 +1,11 @@
+// Core module build.gradle
+
+plugins {
+    id 'java-library'
+}
+
+description = 'Core utilities and base classes'
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.3'
+}

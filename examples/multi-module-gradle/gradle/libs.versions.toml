@@ -1,0 +1,20 @@
+# Version Catalog for multi-module-gradle project
+# This file demonstrates Gradle's version catalog feature
+
+[versions]
+junit = "5.9.3"
+guava = "31.1-jre"
+slf4j = "2.0.9"
+
+[libraries]
+junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junit" }
+junit-platform = { group = "org.junit.platform", name = "junit-platform-launcher", version = "1.9.3" }
+guava = "com.google.guava:guava:31.1-jre"
+slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
+
+[bundles]
+testing = ["junit-jupiter", "junit-platform"]
+logging = ["slf4j-api"]
+
+[plugins]
+kotlin = { id = "org.jetbrains.kotlin.jvm", version = "1.9.0" }

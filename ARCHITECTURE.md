@@ -25,9 +25,10 @@ src/
 │   ├── settings/       # Maven settings.xml
 │   └── plugin/         # Maven plugins
 │
-├── gradle/             # Gradle-specific implementation (future)
+├── gradle/             # Gradle-specific implementation
 │   ├── model/          # Gradle build script model
-│   └── core/           # Gradle task execution
+│   ├── core/           # Gradle task execution
+│   └── settings.rs     # settings.gradle parsing for multi-project builds
 │
 ├── model/              # Maven POM model (backward compatibility)
 │   ├── mod.rs
@@ -65,7 +66,8 @@ src/
 │   ├── default_maven.rs # Main execution engine
 │   ├── graph_builder.rs # Dependency graph construction
 │   ├── goal_parser.rs  # Goal parsing and phase mapping
-│   └── optimization.rs # Build optimization (caching, parallel execution)
+│   ├── optimization.rs # Build optimization (caching, parallel execution)
+│   └── unit_of_work.rs # Gradle-inspired UnitOfWork abstraction
 ├── resolver/           # Dependency resolution
 │   ├── mod.rs
 │   ├── repository.rs    # Remote repository
@@ -218,12 +220,32 @@ Custom error types in `src/error.rs` provide:
 - Better error messages and context
 - Conversion from standard library errors
 
+## Gradle-Inspired Patterns
+
+The following patterns were migrated from Gradle's execution engine:
+
+### UnitOfWork Trait
+Inspired by Gradle's `UnitOfWork.java`, this abstraction provides:
+- **WorkIdentity**: Unique identification for work units
+- **InputFingerprint**: Caching and up-to-date checks via input hashing
+- **WorkOutput**: Standardized execution results
+- **ExecutionContext**: Work execution environment
+- **InputVisitor/OutputVisitor**: Patterns for discovering inputs/outputs
+
+### Multi-Project Builds
+Settings.gradle support enables:
+- **GradleSettings**: Model for settings.gradle parsing
+- **SubprojectConfig**: Per-subproject configuration
+- **include/includeFlat**: Standard Gradle include statements
+- **Multi-project task execution**: Execute tasks across all projects
+
 ## Future Architecture Considerations
 
-1. **Gradle Support**: Full Gradle build script parsing and execution
-   - Gradle build script parsing (Groovy/Kotlin DSL)
-   - Gradle task execution
-   - Gradle dependency resolution
+1. **Gradle Support**: ✅ Implemented
+   - ✅ Gradle build script parsing (Groovy/Kotlin DSL)
+   - ✅ Gradle task execution
+   - ✅ Gradle dependency resolution
+   - ✅ Multi-project builds (settings.gradle)
 2. **Plugin System**: Full Java plugin execution
    - JNI integration available (optional `jni` feature) for direct Java class loading
    - External Maven/Gradle process fallback for plugin execution
@@ -251,5 +273,6 @@ The implementation aims for compatibility with:
 - Standard Maven lifecycle
 - Maven repository layout
 - Maven plugin API (where possible in Rust)
-- Gradle build scripts (Groovy/Kotlin DSL) - in progress
-- Gradle dependency management - in progress
+- Gradle build scripts (Groovy/Kotlin DSL) - implemented
+- Gradle dependency management - implemented
+- Gradle multi-project builds (settings.gradle) - implemented

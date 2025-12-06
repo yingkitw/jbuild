@@ -21,6 +21,8 @@ pub struct GradleProject {
     pub source_compatibility: Option<String>,
     /// Target compatibility
     pub target_compatibility: Option<String>,
+    /// Main class (for application plugin)
+    pub main_class: Option<String>,
     /// Base directory
     pub base_dir: PathBuf,
     /// Build file path
@@ -117,6 +119,7 @@ impl GradleProject {
             version: None,
             source_compatibility: None,
             target_compatibility: None,
+            main_class: None,
             base_dir,
             build_file,
             tasks: Vec::new(),

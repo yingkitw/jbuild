@@ -81,7 +81,48 @@ fn parse_groovy_dsl(
     // Extract tasks (basic - just task names for now)
     project.tasks = parse_tasks(content);
 
+    // Extract main class from application block
+    if let Some(app_block) = extract_block(content, "application") {
+        if let Some(main_class) = extract_main_class(&app_block) {
+            project.main_class = Some(main_class);
+        }
+    }
+
     Ok(project)
+}
+
+/// Extract main class from application block
+fn extract_main_class(app_block: &str) -> Option<String> {
+    // Look for mainClass = 'com.example.Main' or mainClass.set("com.example.Main")
+    for line in app_block.lines() {
+        let line = line.trim();
+        if line.starts_with("mainClass") {
+            // Handle mainClass = 'value' or mainClass = "value"
+            if let Some(eq_pos) = line.find('=') {
+                let value = line[eq_pos+1..].trim()
+                    .trim_matches('\'')
+                    .trim_matches('"')
+                    .to_string();
+                if !value.is_empty() {
+                    return Some(value);
+                }
+            }
+            // Handle mainClass.set("value")
+            if let Some(start) = line.find(".set(") {
+                let rest = &line[start+5..];
+                if let Some(end) = rest.find(')') {
+                    let value = rest[..end].trim()
+                        .trim_matches('\'')
+                        .trim_matches('"')
+                        .to_string();
+                    if !value.is_empty() {
+                        return Some(value);
+                    }
+                }
+            }
+        }
+    }
+    None
 }
 
 /// Parse Kotlin DSL build script
@@ -102,7 +143,6 @@ fn extract_block(content: &str, block_name: &str) -> Option<String> {
     if let Some(start) = content.find(&pattern) {
         let start_pos = start + pattern.len();
         let mut depth = 1;
-        let mut pos = start_pos;
         let chars: Vec<char> = content[start_pos..].chars().collect();
         
         for (i, ch) in chars.iter().enumerate() {
