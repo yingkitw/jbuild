@@ -7,7 +7,6 @@ use std::collections::HashMap;
 use anyhow::{Result, Context};
 
 use crate::gradle::settings::{GradleSettings, parse_settings_file, find_settings_file};
-use crate::gradle::model::GradleProject;
 
 /// An included build in a composite
 #[derive(Debug, Clone)]

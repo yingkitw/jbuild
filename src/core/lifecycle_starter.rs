@@ -8,6 +8,7 @@ use crate::core::goal_parser::GoalParser;
 use crate::plugin_api::registry::PluginRegistry;
 
 /// Lifecycle starter - starts lifecycle execution
+#[allow(dead_code)]
 pub struct LifecycleStarter {
     lifecycle: crate::core::lifecycle::Lifecycle,
     lifecycle_executor: LifecycleExecutor,

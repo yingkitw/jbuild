@@ -221,6 +221,7 @@ impl Plugin for LoadedPlugin {
 }
 
 /// Java mojo implementation that executes plugins via external Java process
+#[allow(dead_code)]
 struct JavaMojo {
     plugin_jar: PathBuf,
     classpath: String,
@@ -280,6 +281,7 @@ impl crate::plugin_api::Mojo for JavaMojo {
     }
 }
 
+#[allow(dead_code)]
 impl JavaMojo {
     /// Find Java executable
     fn find_java() -> Option<PathBuf> {

@@ -17,6 +17,7 @@ pub struct TestResult {
 }
 
 /// Test runner for executing Java tests
+#[allow(dead_code)]
 pub struct TestRunner {
     classpath: ClasspathBuilder,
     test_classes_dir: PathBuf,

@@ -234,12 +234,6 @@ java {} -cp "%CLASSPATH%" {} %*
         }
 
         // Create start scripts in the install directory
-        let plugin_for_install = ApplicationPlugin {
-            extension: self.extension.clone(),
-            base_dir: install_dir.clone(),
-        };
-        
-        // Manually create scripts for install dir
         let main_class = self.extension.main_class.as_ref()
             .ok_or_else(|| anyhow::anyhow!("No mainClass configured"))?;
 

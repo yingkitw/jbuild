@@ -5,6 +5,10 @@ edition = "2024"
 authors = ["Ying Kit WONG"]
 license = "Apache-2.0"
 repository = "https://github.com/yingkitw/jbuild"
+description = "High-performance Java build tool supporting Maven and Gradle"
+keywords = ["java", "maven", "gradle", "build", "pom"]
+categories = ["development-tools::build-utils", "command-line-utilities"]
+readme = "README.md"
 
 [features]
 default = []

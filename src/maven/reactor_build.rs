@@ -338,7 +338,7 @@ mod tests {
     fn test_reactor_build_order() {
         let mut reactor = ReactorBuildStatus::new();
         
-        let mut core = ReactorProject::new("g", "core", "1.0", PathBuf::from("/core"));
+        let core = ReactorProject::new("g", "core", "1.0", PathBuf::from("/core"));
         let mut api = ReactorProject::new("g", "api", "1.0", PathBuf::from("/api"));
         api.add_dependency("g:core");
         let mut app = ReactorProject::new("g", "app", "1.0", PathBuf::from("/app"));

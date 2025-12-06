@@ -194,7 +194,7 @@ impl ProjectDependenciesResolver {
 
     /// Resolve dependencies for a request
     pub fn resolve(&self, request: &DependencyResolutionRequest) -> Result<DependencyResolutionResult> {
-        let mut context = DependencyContext::new();
+        let context = DependencyContext::new();
         let mut result = DependencyResolutionResult::new(context);
 
         let included_scopes = request.scope.included_scopes();

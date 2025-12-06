@@ -1,7 +1,6 @@
 use std::path::PathBuf;
 use std::fs;
 use jbuild::model::parse_pom;
-use jbuild::Model;
 use jbuild::model::ModelValidator;
 use jbuild::model::PropertyInterpolator;
 use jbuild::ArtifactCoordinates;

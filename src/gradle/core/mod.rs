@@ -10,7 +10,6 @@ use std::path::PathBuf;
 use anyhow::Result;
 use crate::build::{BuildExecutor, BuildSystem, ExecutionRequest, ExecutionResult};
 use crate::gradle::model::GradleProject;
-use crate::gradle::settings::find_settings_file;
 
 pub use multi_project::{load_project, load_settings, load_multi_project, is_multi_project};
 pub use dependency_resolver::resolve_dependency;

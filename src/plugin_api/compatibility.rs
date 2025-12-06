@@ -119,7 +119,7 @@ impl PluginCompatibility {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::build::{Plugin as ModelPlugin, Execution};
+    use crate::model::build::Plugin as ModelPlugin;
     use crate::model::Dependency;
 
     fn create_test_plugin(group_id: &str, artifact_id: &str, version: &str) -> ModelPlugin {
