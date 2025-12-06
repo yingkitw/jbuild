@@ -1,5 +1,5 @@
 use std::path::{Path, PathBuf};
-use anyhow::{Context, Result};
+use anyhow::Result;
 
 use crate::packaging::{JarBuilder, Manifest, ResourceFilter};
 

@@ -1,7 +1,7 @@
 # Codebase Improvements - November 2025
 
 ## Overview
-Comprehensive improvements to architecture, testability, and maintainability of the mvn-rs project.
+Comprehensive improvements to architecture, testability, and maintainability of the jbuild project.
 
 ## Key Improvements
 

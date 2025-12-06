@@ -2,14 +2,15 @@ use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 use tracing::info;
 
-use mvn_rs::core::execution::MavenExecutionRequest;
-use mvn_rs::core::default_maven::DefaultMaven;
+use jbuild::build::{BuildSystem, BuildExecutor, ExecutionRequest};
+use jbuild::maven::core::MavenBuildExecutor;
+use jbuild::gradle::core::GradleExecutor;
 
-/// Apache Maven - A software project management and comprehension tool
+/// jbuild - A high-performance build tool for Java projects (Maven & Gradle)
 #[derive(Parser)]
-#[command(name = "mvn")]
+#[command(name = "jbuild")]
 #[command(version = "0.1.0")]
-#[command(about = "Apache Maven", long_about = None)]
+#[command(about = "jbuild - High-performance Java build tool", long_about = None)]
 struct Cli {
     #[command(subcommand)]
     command: Option<Commands>,
@@ -87,6 +88,12 @@ fn main() -> anyhow::Result<()> {
         std::env::current_dir()?
     };
 
+    // Detect build system
+    let build_system = BuildSystem::detect(&base_dir)
+        .ok_or_else(|| anyhow::anyhow!("No build system detected. Looking for pom.xml or build.gradle"))?;
+    
+    info!("Detected build system: {:?}", build_system);
+
     // Determine goals from command
     let goals = match &cli.command {
         Some(Commands::Validate) => vec!["validate".to_string()],
@@ -110,30 +117,35 @@ fn main() -> anyhow::Result<()> {
         }
     }
 
-    // Create execution request
-    let request = MavenExecutionRequest::new(base_dir)
-        .with_goals(goals)
-        .with_pom_file(cli.file.unwrap_or_else(|| {
-            std::env::current_dir()
-                .unwrap()
-                .join("pom.xml")
-        }));
+    // Create generic execution request
+    let request = ExecutionRequest {
+        base_directory: base_dir.clone(),
+        goals,
+        system_properties,
+        show_errors: cli.show_errors,
+        offline: cli.offline,
+    };
 
-    info!("Starting Maven execution");
+    info!("Starting build execution");
+    info!("Build system: {:?}", build_system);
     info!("Base directory: {:?}", request.base_directory);
     info!("Goals: {:?}", request.goals);
 
-    // Execute Maven build
-    let maven = DefaultMaven::new();
-    match maven.execute(request) {
+    // Execute build based on detected system
+    let executor: Box<dyn BuildExecutor> = match build_system {
+        BuildSystem::Maven => Box::new(MavenBuildExecutor::new()),
+        BuildSystem::Gradle => Box::new(GradleExecutor::new()),
+    };
+
+    match executor.execute(request) {
         Ok(result) => {
             if result.success {
                 println!("[INFO] BUILD SUCCESS");
-    Ok(())
+                Ok(())
             } else {
                 eprintln!("[ERROR] BUILD FAILURE");
-                for exception in &result.exceptions {
-                    eprintln!("[ERROR] {}", exception);
+                for error in &result.errors {
+                    eprintln!("[ERROR] {}", error);
                 }
                 std::process::exit(1);
             }

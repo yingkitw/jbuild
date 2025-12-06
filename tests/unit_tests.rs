@@ -1,8 +1,8 @@
-/// Comprehensive unit tests for mvn-rs
+/// Comprehensive unit tests for jbuild
 /// These tests use mock implementations to verify component behavior in isolation
 
-use mvn_rs::core::{ExecutionRequestBuilder, ArtifactRepository, DependencyResolutionStrategy};
-use mvn_rs::{MockArtifactRepository, MockDependencyResolver, TestProjectBuilder};
+use jbuild::core::{ExecutionRequestBuilder, ArtifactRepository, DependencyResolutionStrategy};
+use jbuild::{MockArtifactRepository, MockDependencyResolver, TestProjectBuilder};
 use std::path::PathBuf;
 
 #[test]

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use anyhow::Result;
-use crate::plugin_api::{Plugin, PluginDescriptor};
+use crate::plugin_api::PluginDescriptor;
 use crate::model::build::Plugin as ModelPlugin;
 
 /// Plugin configuration inheritance handler

@@ -1,6 +1,5 @@
 use std::path::PathBuf;
 use std::collections::HashMap;
-use anyhow::Result;
 
 use crate::model::profile::{Profile, Activation, ActivationOS, ActivationProperty, ActivationFile};
 
@@ -223,13 +222,13 @@ impl ProfileActivator {
 
     /// Check file activation
     fn check_file(file: &ActivationFile, project_dir: &Option<PathBuf>) -> bool {
-        if let Some(ref dir) = project_dir {
-            if let Some(ref missing) = file.missing {
+        if let Some(dir) = project_dir {
+            if let Some(missing) = &file.missing {
                 let path = dir.join(missing);
                 return !path.exists();
             }
 
-            if let Some(ref exists) = file.exists {
+            if let Some(exists) = &file.exists {
                 let path = dir.join(exists);
                 return path.exists();
             }

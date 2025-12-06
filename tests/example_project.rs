@@ -1,10 +1,10 @@
 use std::path::PathBuf;
 use std::fs;
-use mvn_rs::model::parse_pom;
-use mvn_rs::Model;
-use mvn_rs::model::ModelValidator;
-use mvn_rs::model::PropertyInterpolator;
-use mvn_rs::ArtifactCoordinates;
+use jbuild::model::parse_pom;
+use jbuild::Model;
+use jbuild::model::ModelValidator;
+use jbuild::model::PropertyInterpolator;
+use jbuild::ArtifactCoordinates;
 
 /// Get the path to the example project
 fn example_project_path() -> PathBuf {

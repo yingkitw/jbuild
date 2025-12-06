@@ -11,7 +11,7 @@
     <packaging>jar</packaging>
     
     <name>Simple Java Project</name>
-    <description>A simple Java project for testing mvn-rs</description>
+    <description>A simple Java project for testing jbuild</description>
     
     <properties>
         <maven.compiler.source>11</maven.compiler.source>

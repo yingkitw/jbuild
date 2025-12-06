@@ -41,7 +41,7 @@ impl Manifest {
         manifest.set_main_attribute("Manifest-Version".to_string(), "1.0".to_string());
         manifest.set_main_attribute(
             "Created-By".to_string(),
-            format!("mvn-rs {}", env!("CARGO_PKG_VERSION")),
+            format!("jbuild {}", env!("CARGO_PKG_VERSION")),
         );
         
         // Set main class if it's an executable JAR (would come from POM configuration)

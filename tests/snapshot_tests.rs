@@ -1,7 +1,7 @@
 /// Snapshot tests using insta for verifying complex outputs
 /// These tests capture and verify the structure of complex objects
 
-use mvn_rs::core::ExecutionRequestBuilder;
+use jbuild::core::ExecutionRequestBuilder;
 use std::path::PathBuf;
 
 #[test]

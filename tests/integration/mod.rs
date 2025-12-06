@@ -1,4 +1,4 @@
-// Integration tests for mvn-rs
+// Integration tests for jbuild
 
 pub mod example_project;
 

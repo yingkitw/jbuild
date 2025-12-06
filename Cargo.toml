@@ -1,17 +1,17 @@
 [package]
-name = "mvn-rs"
+name = "jbuild"
 version = "0.1.0"
-edition = "2021"
-authors = ["mvn-rs contributors"]
+edition = "2024"
+authors = ["Ying Kit WONG"]
 license = "Apache-2.0"
-repository = "https://github.com/apache/maven"
+repository = "https://github.com/yingkitw/jbuild"
 
 [features]
 default = []
 jni = ["dep:jni"]
 
 [[bin]]
-name = "mvn"
+name = "jbuild"
 path = "src/main.rs"
 
 [dependencies]

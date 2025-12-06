@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use crate::artifact::artifact::Artifact;
 
 /// Local repository interface
-pub trait LocalRepository {
+pub trait LocalRepository: Send + Sync {
     /// Get the base directory of the repository
     fn base_directory(&self) -> &PathBuf;
 

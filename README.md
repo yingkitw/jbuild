@@ -1,16 +1,20 @@
-# mvn-rs
+# jbuild
 
-A Rust implementation of Apache Maven, a software project management and comprehension tool.
+A high-performance Rust implementation of Java build tools, supporting both **Maven** and **Gradle** while leveraging Rust's performance and safety guarantees.
 
 ## Overview
 
-This project aims to provide a complete Rust implementation of Apache Maven, maintaining compatibility with Maven's Project Object Model (POM) and build lifecycle while leveraging Rust's performance and safety guarantees.
+jbuild provides a complete Rust implementation of Java build systems, maintaining compatibility with:
+- **Maven**: Project Object Model (POM) and build lifecycle
+- **Gradle**: Build scripts and dependency management
+
+The tool aims to provide faster builds through Rust's performance while maintaining full compatibility with existing Java build configurations.
 
 ## Project Structure
 
 The project is organized as a **single crate** with all modules under `src/`:
 
-- **model/**: POM file parsing and data structures
+- **model/**: POM/Gradle file parsing and data structures
 - **artifact/**: Artifact handling and coordinates
 - **core/**: Core execution engine and lifecycle
 - **resolver/**: Dependency resolution
@@ -23,10 +27,10 @@ The project is organized as a **single crate** with all modules under `src/`:
 
 ## Status
 
-This is an ongoing migration project. Core functionality is being implemented incrementally.
+This is an ongoing project. Both Maven and Gradle support are implemented with shared infrastructure.
 
 **Key Features Implemented:**
-- ✅ POM parsing and model building
+- ✅ Maven POM parsing and model building
 - ✅ Dependency resolution (local and remote repositories)
 - ✅ Plugin loading and descriptor parsing
 - ✅ Plugin dependency resolution
@@ -44,6 +48,10 @@ This is an ongoing migration project. Core functionality is being implemented in
 - ✅ Advanced dependency resolution (version ranges, conflicts, exclusions)
 - ✅ Build optimization (incremental compilation, parallel execution)
 - ✅ Plugin compatibility and configuration inheritance
+- ✅ **Gradle build script parsing (Groovy/Kotlin DSL)**
+- ✅ **Gradle task execution (clean, compileJava, test, jar, build)**
+- ✅ **Build system detection and unified CLI**
+- 🚧 Gradle dependency resolution integration (in progress)
 
 See [TODO.md](TODO.md) for the current list of remaining work items and [MIGRATION.md](MIGRATION.md) for migration details.
 
@@ -60,7 +68,11 @@ cargo build --release --features jni
 ## Running
 
 ```bash
-cargo run --bin mvn -- [maven-args]
+# For Maven projects
+jbuild --file pom.xml compile
+
+# For Gradle projects (coming soon)
+jbuild --file build.gradle build
 ```
 
 ## Testing
@@ -98,7 +110,7 @@ The codebase provides several testing utilities in `testing_utils`:
 Example usage:
 
 ```rust
-use mvn_rs::{MockArtifactRepository, ArtifactRepository};
+use jbuild::{MockArtifactRepository, ArtifactRepository};
 
 #[test]
 fn test_artifact_resolution() {
@@ -113,6 +125,8 @@ fn test_artifact_resolution() {
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed architecture documentation.
 
+The architecture is inspired by Gradle's platform-based design. See [GRADLE_LEARNINGS.md](GRADLE_LEARNINGS.md) for architectural patterns we're adopting.
+
 ### Key Design Patterns
 
 - **Trait-based abstractions**: Core components use traits for testability
@@ -123,4 +137,3 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed architecture documentation.
 ## License
 
 Licensed under the Apache License, Version 2.0.
-

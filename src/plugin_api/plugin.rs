@@ -2,7 +2,7 @@ use crate::plugin_api::descriptor::PluginDescriptor;
 use crate::plugin_api::mojo::Mojo;
 
 /// Maven plugin
-pub trait Plugin {
+pub trait Plugin: Send + Sync {
     /// Get the plugin descriptor
     fn descriptor(&self) -> &PluginDescriptor;
 

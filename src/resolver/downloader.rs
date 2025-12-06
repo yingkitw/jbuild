@@ -45,7 +45,7 @@ impl ArtifactDownloader {
     pub fn with_config(config: DownloadConfig) -> Self {
         Self {
             client: Client::builder()
-                .user_agent("mvn-rs/0.1.0")
+                .user_agent("jbuild/0.1.0")
                 .timeout(Duration::from_secs(30))
                 .build()
                 .expect("Failed to create HTTP client"),
