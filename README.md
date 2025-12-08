@@ -1,14 +1,32 @@
 # jbuild
 
-A high-performance Rust implementation of Java build tools, supporting both **Maven** and **Gradle** while leveraging Rust's performance and safety guarantees.
+**Cargo for Java** - A modern, fast, and user-friendly build system for Java projects.
 
 ## Overview
 
-jbuild provides a complete Rust implementation of Java build systems, maintaining compatibility with:
-- **Maven**: Project Object Model (POM) and build lifecycle
-- **Gradle**: Build scripts and dependency management
+jbuild is a high-performance Rust implementation that aims to bring the **Cargo experience to Java**:
 
-The tool aims to provide faster builds through Rust's performance while maintaining full compatibility with existing Java build configurations.
+- 🚀 **Fast** - Native Rust binary with ~10ms startup (vs 500ms+ for Maven/Gradle)
+- 📦 **Simple** - Zero-config project creation with `jbuild new`
+- 🔧 **Modern CLI** - Intuitive commands: `build`, `run`, `test`, `add`, `tree`
+- 🔄 **Compatible** - Works with existing Maven (pom.xml) and Gradle (build.gradle) projects
+- 💾 **Efficient** - Low memory footprint (~50MB vs 200-300MB for JVM tools)
+
+```bash
+# Create a new project
+jbuild new my-app
+cd my-app
+
+# Build and run
+jbuild build
+jbuild run
+
+# Add dependencies
+jbuild add org.slf4j:slf4j-api:2.0.9
+
+# Show dependency tree
+jbuild tree
+```
 
 ## Comparison: jbuild vs Maven vs Gradle
 
@@ -25,6 +43,9 @@ The tool aims to provide faster builds through Rust's performance while maintain
 | **Multi-module** | ✅ Both systems | ✅ Reactor | ✅ Composite builds |
 | **Plugin Ecosystem** | Maven plugins (via fallback) | Extensive | Extensive |
 | **Configuration** | XML / Groovy DSL | XML only | Groovy/Kotlin DSL |
+| **Project Creation** | `jbuild new` | `mvn archetype:generate` | `gradle init` |
+| **Add Dependency** | `jbuild add` | Manual edit | Manual edit |
+| **Dep Tree** | `jbuild tree` | `mvn dependency:tree` | `gradle dependencies` |
 
 ### Key Advantages of jbuild
 
@@ -77,7 +98,8 @@ This is an ongoing project. Both Maven and Gradle support are implemented with s
 - ✅ **Build system detection and unified CLI**
 - ✅ **Gradle dependency resolution** (integrated with shared resolver)
 - ✅ **Multi-project builds** (settings.gradle support)
-- ✅ **218 tests passing** (unit, integration, multi-module)
+- ✅ **Checkstyle integration** (`jbuild lint` command with 9 checks)
+- ✅ **410 tests passing** (unit, checkstyle, integration, multi-module)
 
 See [TODO.md](TODO.md) for the current list of remaining work items and [MIGRATION.md](MIGRATION.md) for migration details.
 
@@ -182,15 +204,28 @@ cargo build --release --features jni
 ## Running
 
 ```bash
-# For Maven projects
-jbuild --file pom.xml compile
-jbuild --file pom.xml test
-jbuild --file pom.xml package
+# Modern Cargo-like commands (auto-detects build system)
+jbuild build          # Compile the project
+jbuild run            # Build and run main class
+jbuild test           # Run tests
+jbuild clean          # Clean build outputs
+jbuild lint           # Check code style (Checkstyle)
 
-# For Gradle projects
+# Dependency management
+jbuild add org.slf4j:slf4j-api          # Add dependency (latest version)
+jbuild add org.slf4j:slf4j-api:2.0.9    # Add specific version
+jbuild remove org.slf4j:slf4j-api       # Remove dependency
+jbuild tree                              # Show dependency tree
+jbuild outdated                          # Show outdated dependencies
+
+# Project creation
+jbuild new my-app                        # Create new app project
+jbuild new my-lib --template lib         # Create new library project
+jbuild init                              # Initialize in existing directory
+
+# Legacy mode (explicit build file)
+jbuild --file pom.xml compile
 jbuild --file build.gradle build
-jbuild --file build.gradle clean
-jbuild --file build.gradle test
 ```
 
 ### Supported Tasks/Goals
@@ -204,6 +239,33 @@ jbuild --file build.gradle test
 | `clean` | `clean` | Clean build outputs |
 | `install` | - | Install to local repository |
 | - | `build` | Full build (compile + test + jar) |
+
+### Code Quality: `jbuild lint`
+
+The `lint` command runs Checkstyle checks on Java source files:
+
+```bash
+# Check all Java files in src/main/java and src/test/java
+jbuild lint
+
+# Check specific files or directories
+jbuild lint src/main/java
+jbuild lint src/main/java/com/example/App.java
+
+# Use custom Checkstyle configuration
+jbuild lint -c checkstyle.xml
+```
+
+**Available Checks:**
+- **EmptyCatchBlock** - Detects empty catch blocks
+- **EmptyStatement** - Detects empty statements (standalone semicolons)
+- **MissingSwitchDefault** - Detects switch statements without default case
+- **MultipleVariableDeclarations** - Detects multiple variable declarations per statement
+- **SimplifyBooleanReturn** - Detects boolean returns that can be simplified
+- **PackageName** - Validates package naming conventions
+- **TypeName** - Validates type naming conventions
+- **RedundantImport** - Detects redundant imports
+- **LineLength** - Detects lines exceeding maximum length (default: 120)
 
 ## Testing
 

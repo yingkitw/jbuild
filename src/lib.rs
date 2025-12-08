@@ -21,6 +21,9 @@ pub mod plugin_api;  // Maven plugins (kept for backward compatibility)
 // Gradle-specific modules
 pub mod gradle;
 
+// Checkstyle - Java code style checker
+pub mod checkstyle;
+
 // Re-export Gradle types
 pub use gradle::{GradleProject, Task as GradleTask, Dependency as GradleDependency, parse_gradle_build_script};
 

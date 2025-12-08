@@ -2,6 +2,106 @@
 
 This file tracks the remaining work items for jbuild, a Rust implementation supporting both Maven and Gradle build systems.
 
+## Vision: Cargo for Java
+
+jbuild aims to be the **Cargo equivalent for Java** - a modern, fast, and user-friendly build system that provides:
+- **Zero-config project creation** (`jbuild new`, `jbuild init`)
+- **Unified dependency management** (like Cargo.toml for Java)
+- **Fast incremental builds** with smart caching
+- **Built-in tooling** (format, lint, doc, publish)
+- **Modern developer experience** with helpful error messages
+
+---
+
+## Next Up 🎯 (Cargo-like Features)
+
+### Project Scaffolding
+- [x] **`jbuild new <name>`** - Create new Java project with standard layout
+  - [x] Generate pom.xml or build.gradle based on preference (`-b maven|gradle`)
+  - [x] Create src/main/java and src/test/java directories
+  - [x] Generate sample Main.java and MainTest.java
+  - [x] Support templates: `--template lib|app` (multi pending)
+  - [x] Generate .gitignore and README.md
+- [ ] **`jbuild init`** - Initialize jbuild in existing project
+  - [ ] Detect existing source files and infer structure
+  - [ ] Generate build file from detected dependencies
+
+### Unified Configuration (jbuild.toml)
+- [ ] **Native jbuild.toml format** - Simpler alternative to pom.xml/build.gradle
+  ```toml
+  [package]
+  name = "my-app"
+  version = "1.0.0"
+  java = "17"
+  
+  [dependencies]
+  "org.slf4j:slf4j-api" = "2.0.9"
+  "com.google.guava:guava" = "32.1.3-jre"
+  
+  [dev-dependencies]
+  "org.junit.jupiter:junit-jupiter" = "5.10.0"
+  ```
+- [ ] **jbuild.lock** - Lock file for reproducible builds
+- [ ] **Workspace support** - Multi-project workspaces like Cargo workspaces
+
+### Enhanced CLI Commands
+- [x] **`jbuild add <dependency>`** - Add dependency to project
+  - [x] Parse groupId:artifactId:version format
+  - [x] Update pom.xml or build.gradle automatically
+  - [x] Support `--dev` flag for test dependencies
+  - [ ] Search Maven Central for packages (auto-detect latest version)
+- [ ] **`jbuild remove <dependency>`** - Remove dependency
+- [ ] **`jbuild update`** - Update dependencies to latest compatible versions
+- [ ] **`jbuild search <query>`** - Search Maven Central for packages
+- [ ] **`jbuild info <package>`** - Show package details and versions
+- [x] **`jbuild tree`** - Display dependency tree (like `cargo tree`)
+  - [x] Parse pom.xml or build.gradle
+  - [x] Display direct dependencies with scope
+  - [ ] Show transitive dependencies
+- [ ] **`jbuild outdated`** - Show outdated dependencies
+- [ ] **`jbuild audit`** - Security vulnerability scanning
+
+### Build & Run
+- [ ] **`jbuild run`** - Build and run main class (auto-detect or specify)
+- [ ] **`jbuild run --example <name>`** - Run example programs
+- [ ] **`jbuild watch`** - Watch mode with auto-rebuild on file changes
+- [ ] **`jbuild bench`** - Run JMH benchmarks
+
+### Code Quality
+- [ ] **`jbuild fmt`** - Format code (integrate google-java-format or similar)
+- [x] **`jbuild lint`** - Run linters (Checkstyle integrated, SpotBugs/PMD pending)
+  - [x] Checkstyle integration with tree-sitter Java parser
+  - [x] 9 checks: EmptyCatchBlock, EmptyStatement, MissingSwitchDefault, MultipleVariableDeclarations, SimplifyBooleanReturn, PackageName, TypeName, RedundantImport, LineLength
+  - [x] XML configuration file support
+  - [x] Default configuration with common checks
+  - [ ] SpotBugs integration
+  - [ ] PMD integration
+- [ ] **`jbuild check`** - Check code without producing artifacts
+- [ ] **`jbuild fix`** - Auto-fix common issues
+
+### Documentation
+- [ ] **`jbuild doc`** - Generate Javadoc
+- [ ] **`jbuild doc --open`** - Generate and open in browser
+
+### Publishing
+- [ ] **`jbuild publish`** - Publish to Maven Central or custom repository
+- [ ] **`jbuild login`** - Authenticate with repository
+- [ ] **`jbuild package`** - Create distributable package (uber-jar, native image)
+
+### Developer Experience
+- [ ] **Colored output** - Pretty terminal output with colors
+- [ ] **Progress bars** - Download and build progress indicators
+- [ ] **Helpful error messages** - Rust-style error messages with suggestions
+- [ ] **Shell completions** - Bash/Zsh/Fish completions
+- [ ] **`jbuild --explain <error>`** - Detailed error explanations
+
+### Performance
+- [ ] **Daemon mode** - Keep JVM warm for faster subsequent builds
+- [ ] **Remote build cache** - Share build cache across machines
+- [ ] **Native compilation** - GraalVM native-image support
+
+---
+
 ## Completed ✅
 
 ### Maven Support
@@ -76,6 +176,18 @@ This file tracks the remaining work items for jbuild, a Rust implementation supp
 - [x] Gradle plugin system integration - Basic plugin detection and standard tasks
 
 ## Recent Improvements ✨
+
+### Checkstyle Integration (Dec 2025)
+- [x] **Merged checkstyle-rs** - Integrated Rust Checkstyle implementation:
+  - tree-sitter-java for fast Java parsing
+  - 9 checks: EmptyCatchBlock, EmptyStatement, MissingSwitchDefault, MultipleVariableDeclarations, SimplifyBooleanReturn, PackageName, TypeName, RedundantImport, LineLength
+  - `jbuild lint` command with file/directory support
+  - XML configuration file support
+  - Default configuration with common checks
+  - Checkstyle-compatible output format
+  - 169 checkstyle tests migrated
+  - 19 example Java files for testing
+- [x] **Total: 410 Tests Passing** (200 unit + 169 checkstyle + 41 integration)
 
 ### Gradle Migration from Gradle Source (Dec 2025)
 - [x] **UnitOfWork Trait** - Implemented Gradle-inspired execution abstraction with:

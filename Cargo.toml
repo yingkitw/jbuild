@@ -70,6 +70,14 @@ which = "6.0"
 # JNI for Java integration (optional feature)
 jni = { version = "0.21", optional = true }
 
+# Java parsing for checkstyle (tree-sitter)
+tree-sitter = "0.20"
+tree-sitter-java = "0.20"
+
+# Logging for checkstyle
+log = "0.4"
+env_logger = "0.11"
+
 [dev-dependencies]
 # Snapshot testing
 insta = "1.38"
