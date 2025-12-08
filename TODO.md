@@ -22,9 +22,12 @@ jbuild aims to be the **Cargo equivalent for Java** - a modern, fast, and user-f
   - [x] Generate sample Main.java and MainTest.java
   - [x] Support templates: `--template lib|app` (multi pending)
   - [x] Generate .gitignore and README.md
-- [ ] **`jbuild init`** - Initialize jbuild in existing project
-  - [ ] Detect existing source files and infer structure
-  - [ ] Generate build file from detected dependencies
+- [x] **`jbuild init`** - Initialize jbuild in existing project
+  - [x] Detect existing source files and infer structure
+  - [x] Auto-detect main class from `public static void main`
+  - [x] Infer group ID from package names
+  - [x] Generate pom.xml or build.gradle with detected settings
+  - [x] Create standard directory structure if missing
 
 ### Unified Configuration (jbuild.toml)
 - [ ] **Native jbuild.toml format** - Simpler alternative to pom.xml/build.gradle
@@ -49,10 +52,15 @@ jbuild aims to be the **Cargo equivalent for Java** - a modern, fast, and user-f
   - [x] Parse groupId:artifactId:version format
   - [x] Update pom.xml or build.gradle automatically
   - [x] Support `--dev` flag for test dependencies
-  - [ ] Search Maven Central for packages (auto-detect latest version)
-- [ ] **`jbuild remove <dependency>`** - Remove dependency
+  - [ ] Auto-detect latest version from Maven Central
+- [x] **`jbuild remove <dependency>`** - Remove dependency from project
+  - [x] Parse groupId:artifactId format
+  - [x] Remove from pom.xml or build.gradle
 - [ ] **`jbuild update`** - Update dependencies to latest compatible versions
-- [ ] **`jbuild search <query>`** - Search Maven Central for packages
+- [x] **`jbuild search <query>`** - Search Maven Central for packages
+  - [x] Query Maven Central Search API
+  - [x] Display package name, version, and update date
+  - [x] Configurable result limit (`-n`)
 - [ ] **`jbuild info <package>`** - Show package details and versions
 - [x] **`jbuild tree`** - Display dependency tree (like `cargo tree`)
   - [x] Parse pom.xml or build.gradle
@@ -187,7 +195,7 @@ jbuild aims to be the **Cargo equivalent for Java** - a modern, fast, and user-f
   - Checkstyle-compatible output format
   - 169 checkstyle tests migrated
   - 19 example Java files for testing
-- [x] **Total: 410 Tests Passing** (200 unit + 169 checkstyle + 41 integration)
+- [x] **Total: 469 Tests Passing** (200 unit + 169 checkstyle + 59 CLI commands + 41 integration)
 
 ### Gradle Migration from Gradle Source (Dec 2025)
 - [x] **UnitOfWork Trait** - Implemented Gradle-inspired execution abstraction with:

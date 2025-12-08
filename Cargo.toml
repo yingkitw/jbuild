@@ -78,6 +78,12 @@ tree-sitter-java = "0.20"
 log = "0.4"
 env_logger = "0.11"
 
+# HTTP client for Maven Central search
+ureq = "2.9"
+urlencoding = "2.1"
+
 [dev-dependencies]
 # Snapshot testing
 insta = "1.38"
+# Temporary directories for testing
+tempfile = "3.10"

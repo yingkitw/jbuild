@@ -111,6 +111,25 @@ enum Commands {
         #[arg(long = "dev")]
         dev: bool,
     },
+    /// Initialize jbuild in an existing project
+    Init {
+        /// Build system to use (maven, gradle)
+        #[arg(short = 'b', long = "build-system", default_value = "maven")]
+        build_system: String,
+    },
+    /// Remove a dependency from the project
+    Remove {
+        /// Dependency in format groupId:artifactId
+        dependency: String,
+    },
+    /// Search Maven Central for packages
+    Search {
+        /// Search query
+        query: String,
+        /// Maximum number of results
+        #[arg(short = 'n', long = "limit", default_value = "10")]
+        limit: usize,
+    },
 }
 
 fn main() -> anyhow::Result<()> {
@@ -130,6 +149,9 @@ fn main() -> anyhow::Result<()> {
         }
         Some(Commands::Tree) => return run_tree(),
         Some(Commands::Add { dependency, dev }) => return run_add(dependency, *dev),
+        Some(Commands::Init { build_system }) => return run_init(build_system),
+        Some(Commands::Remove { dependency }) => return run_remove(dependency),
+        Some(Commands::Search { query, limit }) => return run_search(query, *limit),
         _ => {}
     }
 
@@ -173,7 +195,9 @@ fn main() -> anyhow::Result<()> {
             Some(Commands::Build) => vec!["build".to_string()],
             Some(Commands::Run) => vec!["run".to_string()],
             Some(Commands::Lint { .. }) | Some(Commands::New { .. }) | 
-            Some(Commands::Tree) | Some(Commands::Add { .. }) => unreachable!(), // Handled earlier
+            Some(Commands::Tree) | Some(Commands::Add { .. }) |
+            Some(Commands::Init { .. }) | Some(Commands::Remove { .. }) |
+            Some(Commands::Search { .. }) => unreachable!(), // Handled earlier
             None => vec!["compile".to_string()],
         }
     };
@@ -762,6 +786,497 @@ fn run_add(dependency: &str, dev: bool) -> anyhow::Result<()> {
     
     println!("[INFO] Added dependency successfully");
     println!("[INFO] Run 'jbuild build' to download and compile");
+    
+    Ok(())
+}
+
+/// Initialize jbuild in an existing project
+fn run_init(build_system: &str) -> anyhow::Result<()> {
+    use std::fs;
+    use walkdir::WalkDir;
+    
+    let base_dir = std::env::current_dir()?;
+    
+    // Check if build file already exists
+    let pom_exists = base_dir.join("pom.xml").exists();
+    let gradle_exists = base_dir.join("build.gradle").exists();
+    
+    if pom_exists || gradle_exists {
+        return Err(anyhow::anyhow!(
+            "Build file already exists. Use 'jbuild add' to add dependencies."
+        ));
+    }
+    
+    println!("[INFO] Initializing jbuild in current directory");
+    
+    // Detect project structure
+    let project_name = base_dir
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("my-project")
+        .to_string();
+    
+    // Scan for Java source files
+    let mut java_files: Vec<PathBuf> = Vec::new();
+    let mut main_class: Option<String> = None;
+    let mut detected_packages: Vec<String> = Vec::new();
+    
+    // Check standard Maven/Gradle source directories
+    let source_dirs = [
+        "src/main/java",
+        "src/test/java",
+        "src",
+        "java",
+    ];
+    
+    for src_dir in &source_dirs {
+        let src_path = base_dir.join(src_dir);
+        if src_path.exists() {
+            for entry in WalkDir::new(&src_path).into_iter().filter_map(|e| e.ok()) {
+                let path = entry.path();
+                if path.is_file() && path.extension().is_some_and(|e| e == "java") {
+                    java_files.push(path.to_path_buf());
+                    
+                    // Try to detect package and main class
+                    if let Ok(content) = fs::read_to_string(path) {
+                        // Extract package name
+                        if let Some(pkg) = extract_package_name(&content) {
+                            if !detected_packages.contains(&pkg) {
+                                detected_packages.push(pkg);
+                            }
+                        }
+                        
+                        // Check for main method
+                        if main_class.is_none() && content.contains("public static void main") {
+                            if let Some(class) = extract_class_name(&content) {
+                                if let Some(pkg) = extract_package_name(&content) {
+                                    main_class = Some(format!("{}.{}", pkg, class));
+                                } else {
+                                    main_class = Some(class);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    println!("[INFO] Found {} Java file(s)", java_files.len());
+    if let Some(ref main) = main_class {
+        println!("[INFO] Detected main class: {}", main);
+    }
+    
+    // Determine group ID from packages
+    let group_id = if let Some(first_pkg) = detected_packages.first() {
+        // Use first two parts of package as group ID
+        let parts: Vec<&str> = first_pkg.split('.').collect();
+        if parts.len() >= 2 {
+            format!("{}.{}", parts[0], parts[1])
+        } else {
+            "com.example".to_string()
+        }
+    } else {
+        "com.example".to_string()
+    };
+    
+    // Create build file
+    match build_system {
+        "gradle" => {
+            let build_gradle = format!(
+                r#"plugins {{
+    id 'java'{}
+}}
+
+group = '{}'
+version = '1.0.0-SNAPSHOT'
+
+java {{
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}}
+
+repositories {{
+    mavenCentral()
+}}
+
+dependencies {{
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+}}
+{}
+test {{
+    useJUnitPlatform()
+}}
+"#,
+                if main_class.is_some() { "\n    id 'application'" } else { "" },
+                group_id,
+                if let Some(ref main) = main_class {
+                    format!("\napplication {{\n    mainClass = '{}'\n}}\n", main)
+                } else {
+                    String::new()
+                }
+            );
+            fs::write(base_dir.join("build.gradle"), build_gradle)?;
+            
+            // Create settings.gradle
+            let settings_gradle = format!("rootProject.name = '{}'\n", project_name);
+            fs::write(base_dir.join("settings.gradle"), settings_gradle)?;
+            
+            println!("[INFO] Created build.gradle and settings.gradle");
+        }
+        _ => {
+            // Default to Maven
+            let pom_xml = format!(
+                r#"<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>{}</groupId>
+    <artifactId>{}</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <name>{}</name>
+    <description>Initialized with jbuild</description>
+
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>{}
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.10.0</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.1.2</version>
+            </plugin>{}
+        </plugins>
+    </build>
+</project>
+"#,
+                group_id,
+                project_name,
+                project_name,
+                if main_class.is_some() {
+                    format!("\n        <exec.mainClass>{}</exec.mainClass>", main_class.as_ref().unwrap())
+                } else {
+                    String::new()
+                },
+                if main_class.is_some() {
+                    r#"
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <mainClass>${exec.mainClass}</mainClass>
+                </configuration>
+            </plugin>"#
+                } else {
+                    ""
+                }
+            );
+            fs::write(base_dir.join("pom.xml"), pom_xml)?;
+            
+            println!("[INFO] Created pom.xml");
+        }
+    }
+    
+    // Create standard directories if they don't exist
+    let dirs_to_create = [
+        "src/main/java",
+        "src/test/java",
+        "src/main/resources",
+        "src/test/resources",
+    ];
+    
+    for dir in &dirs_to_create {
+        let dir_path = base_dir.join(dir);
+        if !dir_path.exists() {
+            fs::create_dir_all(&dir_path)?;
+            println!("[INFO] Created {}", dir);
+        }
+    }
+    
+    // Create .gitignore if it doesn't exist
+    let gitignore_path = base_dir.join(".gitignore");
+    if !gitignore_path.exists() {
+        let gitignore = r#"# Build outputs
+target/
+build/
+out/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+.project
+.classpath
+.settings/
+
+# OS files
+.DS_Store
+Thumbs.db
+"#;
+        fs::write(&gitignore_path, gitignore)?;
+        println!("[INFO] Created .gitignore");
+    }
+    
+    println!("[INFO] ");
+    println!("[INFO] Project initialized successfully!");
+    println!("[INFO] ");
+    println!("[INFO] Next steps:");
+    println!("[INFO]   jbuild build    # Build the project");
+    if main_class.is_some() {
+        println!("[INFO]   jbuild run      # Run the application");
+    }
+    println!("[INFO]   jbuild test     # Run tests");
+    
+    Ok(())
+}
+
+/// Extract package name from Java source
+fn extract_package_name(content: &str) -> Option<String> {
+    for line in content.lines() {
+        let trimmed = line.trim();
+        if trimmed.starts_with("package ") && trimmed.ends_with(';') {
+            let pkg = trimmed
+                .strip_prefix("package ")?
+                .strip_suffix(';')?
+                .trim();
+            return Some(pkg.to_string());
+        }
+    }
+    None
+}
+
+/// Extract class name from Java source
+fn extract_class_name(content: &str) -> Option<String> {
+    for line in content.lines() {
+        let trimmed = line.trim();
+        if trimmed.contains("public class ") || trimmed.contains("public final class ") {
+            // Extract class name
+            let parts: Vec<&str> = trimmed.split_whitespace().collect();
+            for (i, part) in parts.iter().enumerate() {
+                if *part == "class" && i + 1 < parts.len() {
+                    let class_name = parts[i + 1]
+                        .trim_end_matches('{')
+                        .trim_end_matches('<')
+                        .to_string();
+                    return Some(class_name);
+                }
+            }
+        }
+    }
+    None
+}
+
+/// Remove a dependency from the project
+fn run_remove(dependency: &str) -> anyhow::Result<()> {
+    let base_dir = std::env::current_dir()?;
+    
+    // Parse dependency string (groupId:artifactId)
+    let parts: Vec<&str> = dependency.split(':').collect();
+    if parts.len() < 2 {
+        return Err(anyhow::anyhow!(
+            "Invalid dependency format. Use groupId:artifactId"
+        ));
+    }
+    
+    let group_id = parts[0];
+    let artifact_id = parts[1];
+    
+    // Detect build system
+    let build_system = BuildSystem::detect(&base_dir)
+        .ok_or_else(|| anyhow::anyhow!("No build system detected. Looking for pom.xml or build.gradle"))?;
+    
+    println!("[INFO] Removing {}:{} from {:?} project", group_id, artifact_id, build_system);
+    
+    match build_system {
+        BuildSystem::Maven => {
+            let pom_path = base_dir.join("pom.xml");
+            let pom_content = std::fs::read_to_string(&pom_path)?;
+            
+            // Find and remove the dependency block
+            let new_content = remove_maven_dependency(&pom_content, group_id, artifact_id)?;
+            
+            if new_content == pom_content {
+                println!("[WARN] Dependency {}:{} not found in pom.xml", group_id, artifact_id);
+                return Ok(());
+            }
+            
+            std::fs::write(&pom_path, new_content)?;
+        }
+        BuildSystem::Gradle => {
+            let build_path = base_dir.join("build.gradle");
+            let build_content = std::fs::read_to_string(&build_path)?;
+            
+            // Find and remove the dependency line
+            let new_content = remove_gradle_dependency(&build_content, group_id, artifact_id)?;
+            
+            if new_content == build_content {
+                println!("[WARN] Dependency {}:{} not found in build.gradle", group_id, artifact_id);
+                return Ok(());
+            }
+            
+            std::fs::write(&build_path, new_content)?;
+        }
+    }
+    
+    println!("[INFO] Removed dependency successfully");
+    
+    Ok(())
+}
+
+/// Remove a dependency from Maven pom.xml
+fn remove_maven_dependency(content: &str, group_id: &str, artifact_id: &str) -> anyhow::Result<String> {
+    let mut result = String::new();
+    let mut in_target_dependency = false;
+    let mut skip_until_close = false;
+    let mut depth = 0;
+    
+    for line in content.lines() {
+        let trimmed = line.trim();
+        
+        if skip_until_close {
+            if trimmed.contains("</dependency>") {
+                depth -= 1;
+                if depth == 0 {
+                    skip_until_close = false;
+                    in_target_dependency = false;
+                }
+                continue;
+            }
+            if trimmed.contains("<dependency>") {
+                depth += 1;
+            }
+            continue;
+        }
+        
+        if trimmed.starts_with("<dependency>") || trimmed == "<dependency>" {
+            // Look ahead to check if this is the target dependency
+            in_target_dependency = false;
+        }
+        
+        // Check if this line contains our target groupId and artifactId
+        if trimmed.contains(&format!("<groupId>{}</groupId>", group_id)) {
+            in_target_dependency = true;
+        }
+        
+        if in_target_dependency && trimmed.contains(&format!("<artifactId>{}</artifactId>", artifact_id)) {
+            // This is the dependency to remove - go back and remove from <dependency>
+            // Find the last <dependency> in result and remove from there
+            if let Some(pos) = result.rfind("<dependency>") {
+                // Find the start of the line containing <dependency>
+                let line_start = result[..pos].rfind('\n').map(|p| p + 1).unwrap_or(0);
+                result.truncate(line_start);
+                skip_until_close = true;
+                depth = 1;
+                continue;
+            }
+        }
+        
+        result.push_str(line);
+        result.push('\n');
+    }
+    
+    // Clean up extra blank lines
+    let cleaned = result
+        .lines()
+        .collect::<Vec<_>>()
+        .join("\n");
+    
+    Ok(cleaned)
+}
+
+/// Remove a dependency from Gradle build.gradle
+fn remove_gradle_dependency(content: &str, group_id: &str, artifact_id: &str) -> anyhow::Result<String> {
+    let pattern = format!("{}:{}", group_id, artifact_id);
+    
+    let new_lines: Vec<&str> = content
+        .lines()
+        .filter(|line| !line.contains(&pattern))
+        .collect();
+    
+    Ok(new_lines.join("\n"))
+}
+
+/// Search Maven Central for packages
+fn run_search(query: &str, limit: usize) -> anyhow::Result<()> {
+    println!("[INFO] Searching Maven Central for '{}'...", query);
+    println!();
+    
+    // Use Maven Central Search API
+    let url = format!(
+        "https://search.maven.org/solrsearch/select?q={}&rows={}&wt=json",
+        urlencoding::encode(query),
+        limit
+    );
+    
+    // Make HTTP request using ureq (blocking)
+    let response = ureq::get(&url)
+        .call()
+        .map_err(|e| anyhow::anyhow!("Failed to search Maven Central: {}", e))?;
+    
+    let body = response.into_string()?;
+    
+    // Parse JSON response
+    let json: serde_json::Value = serde_json::from_str(&body)?;
+    
+    let docs = json["response"]["docs"]
+        .as_array()
+        .ok_or_else(|| anyhow::anyhow!("Invalid response from Maven Central"))?;
+    
+    if docs.is_empty() {
+        println!("No packages found for '{}'", query);
+        return Ok(());
+    }
+    
+    println!("Found {} package(s):", docs.len());
+    println!();
+    println!("{:<50} {:<15} {}", "PACKAGE", "VERSION", "UPDATED");
+    println!("{}", "-".repeat(80));
+    
+    for doc in docs {
+        let group = doc["g"].as_str().unwrap_or("?");
+        let artifact = doc["a"].as_str().unwrap_or("?");
+        let version = doc["latestVersion"].as_str().unwrap_or("?");
+        let timestamp = doc["timestamp"].as_i64().unwrap_or(0);
+        
+        // Convert timestamp to date
+        let date = if timestamp > 0 {
+            let secs = timestamp / 1000;
+            chrono::DateTime::from_timestamp(secs, 0)
+                .map(|dt| dt.format("%Y-%m-%d").to_string())
+                .unwrap_or_else(|| "?".to_string())
+        } else {
+            "?".to_string()
+        };
+        
+        let package = format!("{}:{}", group, artifact);
+        println!("{:<50} {:<15} {}", package, version, date);
+    }
+    
+    println!();
+    println!("To add a dependency: jbuild add <package>:<version>");
     
     Ok(())
 }

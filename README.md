@@ -2,17 +2,44 @@
 
 **Cargo for Java** - A modern, fast, and user-friendly build system for Java projects.
 
-## Overview
+## The Problem
 
-jbuild is a high-performance Rust implementation that aims to bring the **Cargo experience to Java**:
+Java developers face significant friction with existing build tools:
 
-- 🚀 **Fast** - Native Rust binary with ~10ms startup (vs 500ms+ for Maven/Gradle)
-- 📦 **Simple** - Zero-config project creation with `jbuild new`
-- 🔧 **Modern CLI** - Intuitive commands: `build`, `run`, `test`, `add`, `tree`
-- 🔄 **Compatible** - Works with existing Maven (pom.xml) and Gradle (build.gradle) projects
-- 💾 **Efficient** - Low memory footprint (~50MB vs 200-300MB for JVM tools)
+- **Slow startup**: Maven takes 500ms+ and Gradle 1000ms+ just to start, even for simple commands
+- **High memory usage**: JVM-based tools consume 200-300MB+ of RAM
+- **Complex configuration**: Verbose XML (Maven) or DSL learning curve (Gradle)
+- **Poor developer experience**: No simple `add dependency` command, manual XML editing required
+- **Tool fragmentation**: Different commands and concepts between Maven and Gradle
+
+**Every `mvn compile` or `gradle build` wastes seconds waiting for the JVM to start.**
+
+## The Solution
+
+jbuild is a **native Rust implementation** that brings the Cargo experience to Java:
+
+| Metric | jbuild | Maven | Gradle |
+|--------|--------|-------|--------|
+| **Startup** | ~10ms | ~500ms | ~1000ms |
+| **Memory** | ~50MB | ~200MB | ~300MB |
+| **Add Dependency** | `jbuild add pkg` | Edit XML manually | Edit DSL manually |
+| **Create Project** | `jbuild new app` | `mvn archetype:generate` (interactive) | `gradle init` |
+
+## Key Advantages
+
+1. **50x Faster Startup** - Native binary, no JVM warmup
+2. **5x Less Memory** - Efficient Rust implementation
+3. **Unified CLI** - Same commands for Maven and Gradle projects
+4. **Modern UX** - Simple commands like `add`, `remove`, `search`, `tree`
+5. **Zero Config** - Works with existing `pom.xml` or `build.gradle`
+6. **Code Quality Built-in** - Integrated Checkstyle linting
+
+## Quick Start
 
 ```bash
+# Install (coming soon)
+cargo install jbuild
+
 # Create a new project
 jbuild new my-app
 cd my-app
@@ -21,11 +48,50 @@ cd my-app
 jbuild build
 jbuild run
 
-# Add dependencies
+# Manage dependencies
+jbuild search slf4j              # Search Maven Central
 jbuild add org.slf4j:slf4j-api:2.0.9
+jbuild remove org.slf4j:slf4j-api
+jbuild tree                      # Show dependency tree
 
-# Show dependency tree
-jbuild tree
+# Code quality
+jbuild lint                      # Run Checkstyle checks
+jbuild test                      # Run tests
+```
+
+## Usage
+
+### Project Management
+```bash
+jbuild new my-app                # Create new Maven project
+jbuild new my-app -b gradle      # Create new Gradle project
+jbuild new my-lib -t lib         # Create library project
+jbuild init                      # Initialize in existing directory
+```
+
+### Building & Running
+```bash
+jbuild build                     # Compile + test + package
+jbuild compile                   # Compile only
+jbuild test                      # Run tests
+jbuild run                       # Build and run main class
+jbuild clean                     # Clean build outputs
+```
+
+### Dependency Management
+```bash
+jbuild add group:artifact:version      # Add dependency
+jbuild add group:artifact:version --dev # Add test dependency
+jbuild remove group:artifact           # Remove dependency
+jbuild tree                            # Show dependency tree
+jbuild search <query>                  # Search Maven Central
+```
+
+### Code Quality
+```bash
+jbuild lint                      # Run Checkstyle (9 checks)
+jbuild lint -c checkstyle.xml    # Use custom config
+jbuild lint src/main/java        # Check specific directory
 ```
 
 ## Comparison: jbuild vs Maven vs Gradle
@@ -34,26 +100,16 @@ jbuild tree
 |---------|--------|-------|--------|
 | **Language** | Rust | Java | Groovy/Kotlin (JVM) |
 | **Startup Time** | ~10ms | ~500ms | ~1000ms |
-| **Memory Usage** | Low (~50MB) | High (~200MB+) | High (~300MB+) |
+| **Memory Usage** | ~50MB | ~200MB+ | ~300MB+ |
 | **Build File** | pom.xml / build.gradle | pom.xml | build.gradle(.kts) |
-| **Dependency Resolution** | Shared resolver | Maven Resolver | Gradle Resolver |
-| **Parallel Builds** | Native async (tokio) | Limited | Task-level |
-| **Incremental Builds** | ✅ Built-in | ✅ Plugin-based | ✅ Native |
-| **Build Cache** | ✅ Local | ❌ (requires plugin) | ✅ Local + Remote |
-| **Multi-module** | ✅ Both systems | ✅ Reactor | ✅ Composite builds |
-| **Plugin Ecosystem** | Maven plugins (via fallback) | Extensive | Extensive |
-| **Configuration** | XML / Groovy DSL | XML only | Groovy/Kotlin DSL |
-| **Project Creation** | `jbuild new` | `mvn archetype:generate` | `gradle init` |
-| **Add Dependency** | `jbuild add` | Manual edit | Manual edit |
+| **Add Dependency** | `jbuild add` | Manual XML edit | Manual DSL edit |
+| **Search Packages** | `jbuild search` | ❌ | ❌ |
+| **Remove Dependency** | `jbuild remove` | Manual XML edit | Manual DSL edit |
 | **Dep Tree** | `jbuild tree` | `mvn dependency:tree` | `gradle dependencies` |
-
-### Key Advantages of jbuild
-
-1. **Performance**: Native Rust binary with no JVM startup overhead
-2. **Memory Efficiency**: Significantly lower memory footprint
-3. **Unified Tool**: Single binary supports both Maven and Gradle projects
-4. **Modern Architecture**: Async I/O, parallel execution, trait-based design
-5. **Cross-Platform**: Native binaries for all major platforms
+| **Linting** | `jbuild lint` | Plugin required | Plugin required |
+| **Project Creation** | `jbuild new` | `mvn archetype:generate` | `gradle init` |
+| **Multi-module** | ✅ Both systems | ✅ Reactor | ✅ Composite builds |
+| **Incremental Builds** | ✅ Built-in | ✅ Plugin-based | ✅ Native |
 
 ## Project Structure
 
@@ -99,7 +155,7 @@ This is an ongoing project. Both Maven and Gradle support are implemented with s
 - ✅ **Gradle dependency resolution** (integrated with shared resolver)
 - ✅ **Multi-project builds** (settings.gradle support)
 - ✅ **Checkstyle integration** (`jbuild lint` command with 9 checks)
-- ✅ **410 tests passing** (unit, checkstyle, integration, multi-module)
+- ✅ **469 tests passing** (unit, checkstyle, CLI commands, integration)
 
 See [TODO.md](TODO.md) for the current list of remaining work items and [MIGRATION.md](MIGRATION.md) for migration details.
 
