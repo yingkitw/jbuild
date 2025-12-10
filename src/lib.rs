@@ -24,6 +24,12 @@ pub mod gradle;
 // Checkstyle - Java code style checker
 pub mod checkstyle;
 
+// UI utilities
+pub mod ui;
+
+// Application runner
+pub mod runner;
+
 // Re-export Gradle types
 pub use gradle::{GradleProject, Task as GradleTask, Dependency as GradleDependency, parse_gradle_build_script};
 
@@ -36,4 +42,5 @@ pub use settings::{Settings, Profile as SettingsProfile, Server, Mirror};
 pub use plugin_api::{Mojo, Plugin, PluginDescriptor};
 pub use error::{MavenError, MavenResult};
 pub use testing_utils::{MockArtifactRepository, MockDependencyResolver, TestProjectBuilder};
+pub use ui::{info, success, error, warn, build_success, build_failure};
 

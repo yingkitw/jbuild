@@ -46,7 +46,9 @@ cd my-app
 
 # Build and run
 jbuild build
-jbuild run
+jbuild run                    # Auto-detect and run main class
+jbuild run --main-class com.example.App  # Specify main class
+jbuild run arg1 arg2          # Pass arguments to application
 
 # Manage dependencies
 jbuild search slf4j              # Search Maven Central
@@ -80,8 +82,9 @@ jbuild clean                     # Clean build outputs
 
 ### Dependency Management
 ```bash
-jbuild add group:artifact:version      # Add dependency
-jbuild add group:artifact:version --dev # Add test dependency
+jbuild add group:artifact              # Add dependency (auto-detects latest version)
+jbuild add group:artifact:version      # Add dependency with specific version
+jbuild add group:artifact --dev        # Add test dependency
 jbuild remove group:artifact           # Remove dependency
 jbuild tree                            # Show dependency tree
 jbuild search <query>                  # Search Maven Central
@@ -282,6 +285,11 @@ jbuild init                              # Initialize in existing directory
 # Legacy mode (explicit build file)
 jbuild --file pom.xml compile
 jbuild --file build.gradle build
+
+# Generate shell completions
+jbuild completions bash > /etc/bash_completion.d/jbuild
+jbuild completions zsh > ~/.zsh/completions/_jbuild
+jbuild completions fish > ~/.config/fish/completions/jbuild.fish
 ```
 
 ### Supported Tasks/Goals

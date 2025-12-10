@@ -1,9 +1,57 @@
+# Rust build outputs
 /target
 **/*.rs.bk
 Cargo.lock
-.idea
-.vscode
+
+# Java build outputs (Maven)
+target/
+**/target/
+
+# Java build outputs (Gradle)
+build/
+**/build/
+.gradle/
+**/.gradle/
+bin/
+**/bin/
+out/
+**/out/
+
+# Compiled Java classes
+*.class
+**/*.class
+
+# JAR/WAR/EAR files (unless they're part of the project)
+*.jar
+*.war
+*.ear
+*.nar
+!examples/**/*.jar
+
+# IDE files
+.idea/
+*.iml
+**/*.iml
+.vscode/
+.project
+.classpath
+.settings/
 *.swp
 *.swo
 *~
+
+# OS files
+.DS_Store
+**/.DS_Store
+Thumbs.db
+*.orig
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
 

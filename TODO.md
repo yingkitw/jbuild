@@ -52,7 +52,7 @@ jbuild aims to be the **Cargo equivalent for Java** - a modern, fast, and user-f
   - [x] Parse groupId:artifactId:version format
   - [x] Update pom.xml or build.gradle automatically
   - [x] Support `--dev` flag for test dependencies
-  - [ ] Auto-detect latest version from Maven Central
+  - [x] Auto-detect latest version from Maven Central
 - [x] **`jbuild remove <dependency>`** - Remove dependency from project
   - [x] Parse groupId:artifactId format
   - [x] Remove from pom.xml or build.gradle
@@ -70,7 +70,13 @@ jbuild aims to be the **Cargo equivalent for Java** - a modern, fast, and user-f
 - [ ] **`jbuild audit`** - Security vulnerability scanning
 
 ### Build & Run
-- [ ] **`jbuild run`** - Build and run main class (auto-detect or specify)
+- [x] **`jbuild run`** - Build and run main class (auto-detect or specify)
+  - [x] Auto-detect main class from source files
+  - [x] Extract main class from pom.xml/build.gradle configuration
+  - [x] Support --main-class flag to override
+  - [x] Build classpath for both Maven and Gradle
+  - [x] Support passing arguments to application
+  - [x] Auto-build project before running
 - [ ] **`jbuild run --example <name>`** - Run example programs
 - [ ] **`jbuild watch`** - Watch mode with auto-rebuild on file changes
 - [ ] **`jbuild bench`** - Run JMH benchmarks
@@ -97,10 +103,21 @@ jbuild aims to be the **Cargo equivalent for Java** - a modern, fast, and user-f
 - [ ] **`jbuild package`** - Create distributable package (uber-jar, native image)
 
 ### Developer Experience
-- [ ] **Colored output** - Pretty terminal output with colors
-- [ ] **Progress bars** - Download and build progress indicators
+- [x] **Colored output** - Pretty terminal output with colors
+  - [x] Color-coded messages (info, success, error, warn)
+  - [x] Auto-detection of TTY and CI environment
+  - [x] NO_COLOR environment variable support
+- [x] **Progress bars** - Download and build progress indicators
+  - [x] Progress bar utilities for downloads
+  - [x] Spinner for build operations
+  - [x] Dependency resolution progress
 - [ ] **Helpful error messages** - Rust-style error messages with suggestions
-- [ ] **Shell completions** - Bash/Zsh/Fish completions
+  - [x] Basic colored error output
+  - [ ] Source code context in errors
+  - [ ] Actionable suggestions
+- [x] **Shell completions** - Bash/Zsh/Fish completions
+  - [x] `jbuild completions <shell>` command
+  - [x] Support for bash, zsh, fish, powershell, elvish
 - [ ] **`jbuild --explain <error>`** - Detailed error explanations
 
 ### Performance
@@ -418,9 +435,9 @@ jbuild aims to be the **Cargo equivalent for Java** - a modern, fast, and user-f
     - [x] Property interpolation
     - [x] Model validation
   - [ ] Maven plugin compatibility
-    - [x] Plugin API compatibility layer
-    - [x] Plugin configuration inheritance
-    - [ ] Legacy plugin support (framework ready, specific legacy formats pending)
+  - [x] Plugin API compatibility layer
+  - [x] Plugin configuration inheritance
+  - [ ] Legacy plugin support (framework ready, specific legacy formats pending)
 
 ### Lower Priority
 

@@ -6,6 +6,7 @@ use jbuild::build::{BuildSystem, BuildExecutor, ExecutionRequest, BuildWrapper, 
 use jbuild::maven::core::MavenBuildExecutor;
 use jbuild::gradle::core::GradleExecutor;
 use jbuild::checkstyle::{Checker, ConfigurationLoader, DefaultLogger};
+use jbuild::ui::{info, success, error, warn, build_success, build_failure};
 
 /// jbuild - A high-performance build tool for Java projects (Maven & Gradle)
 #[derive(Parser)]
@@ -79,8 +80,15 @@ enum Commands {
     Clean,
     /// Build the project (compile + test + package)
     Build,
-    /// Run the application (Gradle only)
-    Run,
+    /// Run the application
+    Run {
+        /// Arguments to pass to the application
+        #[arg(trailing_var_arg = true)]
+        args: Vec<String>,
+        /// Main class to run (auto-detected if not specified)
+        #[arg(short = 'm', long = "main-class")]
+        main_class: Option<String>,
+    },
     /// Lint Java code using Checkstyle
     Lint {
         /// Configuration file for Checkstyle (XML format)
@@ -130,6 +138,11 @@ enum Commands {
         #[arg(short = 'n', long = "limit", default_value = "10")]
         limit: usize,
     },
+    /// Generate shell completions
+    Completions {
+        /// Shell to generate completions for (bash, zsh, fish, powershell, elvish)
+        shell: clap_complete::Shell,
+    },
 }
 
 fn main() -> anyhow::Result<()> {
@@ -152,6 +165,12 @@ fn main() -> anyhow::Result<()> {
         Some(Commands::Init { build_system }) => return run_init(build_system),
         Some(Commands::Remove { dependency }) => return run_remove(dependency),
         Some(Commands::Search { query, limit }) => return run_search(query, *limit),
+        Some(Commands::Completions { shell }) => {
+            return run_completions(*shell);
+        }
+        Some(Commands::Run { args, main_class }) => {
+            return run_app(args, main_class.as_deref());
+        }
         _ => {}
     }
 
@@ -193,11 +212,11 @@ fn main() -> anyhow::Result<()> {
             Some(Commands::Deploy) => vec!["deploy".to_string()],
             Some(Commands::Clean) => vec!["clean".to_string()],
             Some(Commands::Build) => vec!["build".to_string()],
-            Some(Commands::Run) => vec!["run".to_string()],
+            Some(Commands::Run { .. }) => vec!["run".to_string()],
             Some(Commands::Lint { .. }) | Some(Commands::New { .. }) | 
             Some(Commands::Tree) | Some(Commands::Add { .. }) |
             Some(Commands::Init { .. }) | Some(Commands::Remove { .. }) |
-            Some(Commands::Search { .. }) => unreachable!(), // Handled earlier
+            Some(Commands::Search { .. }) | Some(Commands::Completions { .. }) => unreachable!(), // Handled earlier
             None => vec!["compile".to_string()],
         }
     };
@@ -252,18 +271,18 @@ fn main() -> anyhow::Result<()> {
     match executor.execute(request) {
         Ok(result) => {
             if result.success {
-                println!("[INFO] BUILD SUCCESS");
+                build_success();
                 Ok(())
             } else {
-                eprintln!("[ERROR] BUILD FAILURE");
-                for error in &result.errors {
-                    eprintln!("[ERROR] {}", error);
+                build_failure();
+                for err in &result.errors {
+                    error(err);
                 }
                 std::process::exit(1);
             }
         }
         Err(e) => {
-            eprintln!("[ERROR] Build failed: {}", e);
+            error(&format!("Build failed: {}", e));
             std::process::exit(1);
         }
     }
@@ -308,11 +327,11 @@ fn run_lint(cli: &Cli) -> anyhow::Result<()> {
     };
 
     if files_to_check.is_empty() {
-        println!("[INFO] No Java files found to check");
+        warn("No Java files found to check");
         return Ok(());
     }
-
-    println!("[INFO] Checking {} Java file(s)", files_to_check.len());
+    
+    info(&format!("Checking {} Java file(s)", files_to_check.len()));
 
     // Load configuration or use defaults
     let config = if let Some(config_path) = config_file {
@@ -334,10 +353,10 @@ fn run_lint(cli: &Cli) -> anyhow::Result<()> {
     let error_count = checker.process(&files_to_check)?;
 
     if error_count > 0 {
-        eprintln!("[ERROR] Checkstyle found {} error(s)", error_count);
+        error(&format!("Checkstyle found {} error(s)", error_count));
         std::process::exit(1);
     } else {
-        println!("[INFO] Checkstyle completed with no errors");
+        success("Checkstyle completed with no errors");
         Ok(())
     }
 }
@@ -703,8 +722,26 @@ fn run_add(dependency: &str, dev: bool) -> anyhow::Result<()> {
     let version = if parts.len() > 2 { 
         parts[2].to_string() 
     } else {
-        // TODO: Fetch latest version from Maven Central
-        "LATEST".to_string()
+        // Fetch latest version from Maven Central
+        use jbuild::runner::fetch_latest_version;
+        use jbuild::ui::{info, warn};
+        
+        info(&format!("Fetching latest version for {}:{}...", group_id, artifact_id));
+        match fetch_latest_version(group_id, artifact_id) {
+            Ok(v) => {
+                info(&format!("Found latest version: {}", v));
+                v
+            }
+            Err(e) => {
+                warn(&format!("Failed to fetch latest version: {}. Using 'LATEST' placeholder.", e));
+                warn("Please specify version explicitly: jbuild add group:artifact:version");
+                return Err(anyhow::anyhow!(
+                    "Could not determine version for {}:{}. Please specify version explicitly.",
+                    group_id,
+                    artifact_id
+                ));
+            }
+        }
     };
     
     // Detect build system
@@ -1221,62 +1258,131 @@ fn remove_gradle_dependency(content: &str, group_id: &str, artifact_id: &str) ->
 
 /// Search Maven Central for packages
 fn run_search(query: &str, limit: usize) -> anyhow::Result<()> {
-    println!("[INFO] Searching Maven Central for '{}'...", query);
+    use jbuild::runner::search_maven_central;
+    use jbuild::ui::{info, warn};
+    
+    info(&format!("Searching Maven Central for '{}'...", query));
     println!();
     
-    // Use Maven Central Search API
-    let url = format!(
-        "https://search.maven.org/solrsearch/select?q={}&rows={}&wt=json",
-        urlencoding::encode(query),
-        limit
-    );
+    let results = match search_maven_central(query, limit) {
+        Ok(r) => r,
+        Err(e) => {
+            warn(&format!("Failed to search Maven Central: {}", e));
+            return Err(e);
+        }
+    };
     
-    // Make HTTP request using ureq (blocking)
-    let response = ureq::get(&url)
-        .call()
-        .map_err(|e| anyhow::anyhow!("Failed to search Maven Central: {}", e))?;
-    
-    let body = response.into_string()?;
-    
-    // Parse JSON response
-    let json: serde_json::Value = serde_json::from_str(&body)?;
-    
-    let docs = json["response"]["docs"]
-        .as_array()
-        .ok_or_else(|| anyhow::anyhow!("Invalid response from Maven Central"))?;
-    
-    if docs.is_empty() {
-        println!("No packages found for '{}'", query);
+    if results.is_empty() {
+        warn(&format!("No packages found for '{}'", query));
         return Ok(());
     }
     
-    println!("Found {} package(s):", docs.len());
+    println!("Found {} package(s):", results.len());
     println!();
     println!("{:<50} {:<15} {}", "PACKAGE", "VERSION", "UPDATED");
     println!("{}", "-".repeat(80));
     
-    for doc in docs {
-        let group = doc["g"].as_str().unwrap_or("?");
-        let artifact = doc["a"].as_str().unwrap_or("?");
-        let version = doc["latestVersion"].as_str().unwrap_or("?");
-        let timestamp = doc["timestamp"].as_i64().unwrap_or(0);
-        
-        // Convert timestamp to date
-        let date = if timestamp > 0 {
-            let secs = timestamp / 1000;
-            chrono::DateTime::from_timestamp(secs, 0)
-                .map(|dt| dt.format("%Y-%m-%d").to_string())
-                .unwrap_or_else(|| "?".to_string())
-        } else {
-            "?".to_string()
-        };
-        
-        let package = format!("{}:{}", group, artifact);
-        println!("{:<50} {:<15} {}", package, version, date);
+    for result in &results {
+        let package = format!("{}:{}", result.group_id, result.artifact_id);
+        println!("{:<50} {:<15} {}", package, result.version, result.updated);
     }
     
     println!();
     println!("To add a dependency: jbuild add <package>:<version>");
+    println!("Or use: jbuild add {}:{}  (auto-detects latest version)", 
+        results[0].group_id, results[0].artifact_id);
     
+    Ok(())
+}
+
+/// Generate shell completions
+fn run_completions(shell: clap_complete::Shell) -> anyhow::Result<()> {
+    use clap::CommandFactory;
+    let mut cmd = Cli::command();
+    let bin_name = cmd.get_name().to_string();
+    clap_complete::generate(shell, &mut cmd, bin_name, &mut std::io::stdout());
+    Ok(())
+}
+
+/// Run the Java application
+fn run_app(args: &[String], main_class_override: Option<&str>) -> anyhow::Result<()> {
+    use jbuild::runner::{detect_main_class, extract_main_class_from_config, build_classpath, run_java_app};
+    use jbuild::build::{BuildSystem, BuildExecutor, ExecutionRequest};
+    use jbuild::maven::core::MavenBuildExecutor;
+    use jbuild::gradle::core::GradleExecutor;
+    use jbuild::ui::{info, warn, success};
+
+    let base_dir = std::env::current_dir()?;
+
+    // Detect build system
+    let build_system = BuildSystem::detect(&base_dir)
+        .ok_or_else(|| anyhow::anyhow!("No build system detected. Looking for pom.xml or build.gradle"))?;
+
+    info(&format!("Detected build system: {:?}", build_system));
+
+    // Auto-build the project before running
+    info("Building project...");
+    let executor: Box<dyn BuildExecutor> = match build_system {
+        BuildSystem::Maven => Box::new(MavenBuildExecutor::new()),
+        BuildSystem::Gradle => Box::new(GradleExecutor::new()),
+    };
+
+    let build_request = ExecutionRequest {
+        base_directory: base_dir.clone(),
+        goals: match build_system {
+            BuildSystem::Maven => vec!["compile".to_string()],
+            BuildSystem::Gradle => vec!["compileJava".to_string()],
+        },
+        system_properties: std::collections::HashMap::new(),
+        show_errors: true,
+        offline: false,
+    };
+
+    match executor.execute(build_request) {
+        Ok(result) => {
+            if result.success {
+                success("Build completed successfully");
+            } else {
+                warn("Build completed with warnings");
+                for error in &result.errors {
+                    warn(error);
+                }
+            }
+        }
+        Err(e) => {
+            warn(&format!("Build failed: {}. Attempting to run anyway...", e));
+        }
+    }
+
+    // Find main class
+    let main_class = if let Some(mc) = main_class_override {
+        mc.to_string()
+    } else {
+        // Try to get from configuration first
+        if let Some(mc) = extract_main_class_from_config(&base_dir)? {
+            mc
+        } else if let Some(mc) = detect_main_class(&base_dir)? {
+            mc
+        } else {
+            return Err(anyhow::anyhow!(
+                "Could not find main class. Please specify with --main-class or ensure your project has a main method."
+            ));
+        }
+    };
+
+    info(&format!("Running main class: {}", main_class));
+
+    // Build classpath
+    let classpath = build_classpath(&base_dir, &build_system)?;
+    
+    if classpath.is_empty() {
+        warn("Classpath is empty. The project may need to be built first.");
+        warn("Run 'jbuild build' or 'jbuild compile' first.");
+        return Err(anyhow::anyhow!("Cannot run application: classpath is empty"));
+    }
+
+    // Run the application
+    run_java_app(&base_dir, &main_class, &classpath, args)?;
+
     Ok(())
 }
