@@ -85,7 +85,12 @@ jbuild aims to be the **Cargo equivalent for Java** - a modern, fast, and user-f
   - [x] Support passing arguments to application
   - [x] Auto-build project before running
 - [ ] **`jbuild run --example <name>`** - Run example programs
-- [ ] **`jbuild watch`** - Watch mode with auto-rebuild on file changes
+- [x] **`jbuild watch`** - Watch mode with auto-rebuild on file changes
+  - [x] Watch source files for changes
+  - [x] Auto-rebuild on file changes with debouncing
+  - [x] Support --test flag to run tests on change
+  - [x] Configurable watch paths
+  - [x] Support both Maven and Gradle
 - [ ] **`jbuild bench`** - Run JMH benchmarks
 
 ### Code Quality
@@ -97,7 +102,11 @@ jbuild aims to be the **Cargo equivalent for Java** - a modern, fast, and user-f
   - [x] Default configuration with common checks
   - [ ] SpotBugs integration
   - [ ] PMD integration
-- [ ] **`jbuild check`** - Check code without producing artifacts
+- [x] **`jbuild check`** - Check code without producing artifacts
+  - [x] Compile main and test sources without packaging
+  - [x] Support both Maven and Gradle
+  - [x] Maps to compile/test-compile phases for Maven
+  - [x] Maps to compileJava/compileTestJava tasks for Gradle
 - [ ] **`jbuild fix`** - Auto-fix common issues
 
 ### Documentation

@@ -27,6 +27,7 @@ impl GoalMapper {
         maven_to_gradle.insert("compile".to_string(), vec!["compileJava".to_string()]);
         maven_to_gradle.insert("test-compile".to_string(), vec!["compileTestJava".to_string()]);
         maven_to_gradle.insert("test".to_string(), vec!["test".to_string()]);
+        maven_to_gradle.insert("check".to_string(), vec!["compileJava".to_string(), "compileTestJava".to_string()]);
         maven_to_gradle.insert("package".to_string(), vec!["jar".to_string()]);
         maven_to_gradle.insert("verify".to_string(), vec!["check".to_string()]);
         maven_to_gradle.insert("install".to_string(), vec!["publishToMavenLocal".to_string()]);

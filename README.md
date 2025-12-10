@@ -79,8 +79,11 @@ jbuild init                      # Initialize in existing directory
 ```bash
 jbuild build                     # Compile + test + package
 jbuild compile                   # Compile only
+jbuild check                     # Check code (compile without artifacts)
 jbuild test                      # Run tests
 jbuild run                       # Build and run main class
+jbuild watch                     # Watch for changes and auto-rebuild
+jbuild watch --test              # Watch and run tests on change
 jbuild clean                     # Clean build outputs
 ```
 

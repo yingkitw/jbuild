@@ -80,6 +80,8 @@ enum Commands {
     Clean,
     /// Build the project (compile + test + package)
     Build,
+    /// Check the project (compile without producing artifacts)
+    Check,
     /// Run the application
     Run {
         /// Arguments to pass to the application
@@ -156,6 +158,15 @@ enum Commands {
     },
     /// Show outdated dependencies
     Outdated,
+    /// Watch for file changes and auto-rebuild
+    Watch {
+        /// Run tests on change
+        #[arg(long = "test")]
+        test: bool,
+        /// Watch specific paths (default: src/)
+        #[arg(short = 'w', long = "watch")]
+        watch_paths: Vec<PathBuf>,
+    },
 }
 
 fn main() -> anyhow::Result<()> {
@@ -192,6 +203,9 @@ fn main() -> anyhow::Result<()> {
         }
         Some(Commands::Outdated) => {
             return run_outdated();
+        }
+        Some(Commands::Watch { test, watch_paths }) => {
+            return run_watch(*test, watch_paths.clone());
         }
         _ => {}
     }
@@ -234,13 +248,14 @@ fn main() -> anyhow::Result<()> {
             Some(Commands::Deploy) => vec!["deploy".to_string()],
             Some(Commands::Clean) => vec!["clean".to_string()],
             Some(Commands::Build) => vec!["build".to_string()],
+            Some(Commands::Check) => vec!["check".to_string()],
             Some(Commands::Run { .. }) => vec!["run".to_string()],
             Some(Commands::Lint { .. }) | Some(Commands::New { .. }) | 
             Some(Commands::Tree) | Some(Commands::Add { .. }) |
             Some(Commands::Init { .. }) | Some(Commands::Remove { .. }) |
             Some(Commands::Search { .. }) | Some(Commands::Completions { .. }) |
             Some(Commands::Update { .. }) | Some(Commands::Info { .. }) |
-            Some(Commands::Outdated) => unreachable!(), // Handled earlier
+            Some(Commands::Outdated) | Some(Commands::Watch { .. }) | Some(Commands::Check) => unreachable!(), // Handled earlier
             None => vec!["compile".to_string()],
         }
     };
@@ -248,14 +263,27 @@ fn main() -> anyhow::Result<()> {
     // Map goals to appropriate build system tasks
     let goal_mapper = GoalMapper::new();
     let mapped_goals = match build_system {
-        BuildSystem::Maven => goals.clone(), // Keep Maven goals as-is
+        BuildSystem::Maven => {
+            // Handle "check" specially for Maven - it should compile both main and test sources
+            if goals.contains(&"check".to_string()) {
+                goals.iter().flat_map(|g| {
+                    if g == "check" {
+                        vec!["compile".to_string(), "test-compile".to_string()]
+                    } else {
+                        vec![g.clone()]
+                    }
+                }).collect()
+            } else {
+                goals.clone()
+            }
+        }
         BuildSystem::Gradle => {
             // Convert Maven-style goals to Gradle tasks if needed
-            goals.iter().map(|g| {
+            goals.iter().flat_map(|g| {
                 if GoalMapper::is_lifecycle_phase(g) {
-                    goal_mapper.maven_to_gradle(g).first().cloned().unwrap_or_else(|| g.clone())
+                    goal_mapper.maven_to_gradle(g)
                 } else {
-                    g.clone()
+                    vec![g.clone()]
                 }
             }).collect()
         }
@@ -1773,4 +1801,170 @@ fn run_outdated() -> anyhow::Result<()> {
     }
     
     Ok(())
+}
+
+/// Watch for file changes and auto-rebuild
+fn run_watch(run_tests: bool, watch_paths: Vec<PathBuf>) -> anyhow::Result<()> {
+    use notify::{Watcher, RecursiveMode, Event, EventKind};
+    use std::sync::mpsc;
+    use std::time::Duration;
+    use jbuild::ui::{info, success, warn};
+    use jbuild::build::{BuildSystem, BuildExecutor, ExecutionRequest};
+    use jbuild::maven::core::MavenBuildExecutor;
+    use jbuild::gradle::core::GradleExecutor;
+    
+    let base_dir = std::env::current_dir()?;
+    let build_system = BuildSystem::detect(&base_dir)
+        .ok_or_else(|| anyhow::anyhow!("No build system detected. Looking for pom.xml or build.gradle"))?;
+    
+    info(&format!("Watching for changes in {:?} project...", build_system));
+    info("Press Ctrl+C to stop");
+    println!();
+    
+    // Determine paths to watch
+    let paths_to_watch: Vec<PathBuf> = if watch_paths.is_empty() {
+        // Default: watch src/ directory
+        vec![base_dir.join("src")]
+    } else {
+        watch_paths.iter().map(|p| {
+            if p.is_absolute() {
+                p.clone()
+            } else {
+                base_dir.join(p)
+            }
+        }).collect()
+    };
+    
+    // Create watcher
+    let (tx, rx) = mpsc::channel();
+    let mut watcher = notify::recommended_watcher(move |result| {
+        if let Ok(event) = result {
+            let _ = tx.send(event);
+        }
+    })?;
+    
+    // Watch paths
+    for path in &paths_to_watch {
+        if path.exists() {
+            watcher.watch(path, RecursiveMode::Recursive)?;
+            info(&format!("Watching: {}", path.display()));
+        } else {
+            warn(&format!("Path does not exist, skipping: {}", path.display()));
+        }
+    }
+    
+    // Create executor
+    let executor: Box<dyn BuildExecutor> = match build_system {
+        BuildSystem::Maven => Box::new(MavenBuildExecutor::new()),
+        BuildSystem::Gradle => Box::new(GradleExecutor::new()),
+    };
+    
+    // Determine build goals
+    let build_goals = if run_tests {
+        match build_system {
+            BuildSystem::Maven => vec!["compile".to_string(), "test-compile".to_string(), "test".to_string()],
+            BuildSystem::Gradle => vec!["compileJava".to_string(), "compileTestJava".to_string(), "test".to_string()],
+        }
+    } else {
+        match build_system {
+            BuildSystem::Maven => vec!["compile".to_string(), "test-compile".to_string()],
+            BuildSystem::Gradle => vec!["compileJava".to_string(), "compileTestJava".to_string()],
+        }
+    };
+    
+    // Debounce timer - wait for file changes to settle
+    let mut last_change = std::time::Instant::now();
+    let debounce_duration = Duration::from_millis(500);
+    let mut pending_build = false;
+    
+    // Initial build
+    info("Performing initial build...");
+    let request = ExecutionRequest {
+        base_directory: base_dir.clone(),
+        goals: build_goals.clone(),
+        system_properties: std::collections::HashMap::new(),
+        show_errors: true,
+        offline: false,
+    };
+    
+    match executor.execute(request) {
+        Ok(result) => {
+            if result.success {
+                success("Initial build succeeded");
+            } else {
+                warn("Initial build had errors");
+            }
+        }
+        Err(e) => {
+            warn(&format!("Initial build failed: {}", e));
+        }
+    }
+    println!();
+    
+    // Watch loop
+    loop {
+        // Check for file changes with timeout
+        match rx.recv_timeout(Duration::from_millis(100)) {
+            Ok(Event { kind: EventKind::Modify(_) | EventKind::Create(_) | EventKind::Remove(_), paths, .. }) => {
+                // Filter out non-source files
+                let relevant_changes: Vec<_> = paths.iter()
+                    .filter(|p| {
+                        let path_str = p.to_string_lossy();
+                        path_str.ends_with(".java") || 
+                        path_str.ends_with(".xml") || 
+                        path_str.ends_with(".gradle") ||
+                        path_str.ends_with(".gradle.kts")
+                    })
+                    .collect();
+                
+                if !relevant_changes.is_empty() {
+                    for path in &relevant_changes {
+                        info(&format!("Change detected: {}", path.display()));
+                    }
+                    last_change = std::time::Instant::now();
+                    pending_build = true;
+                }
+            }
+            Ok(_) => {
+                // Other event types, ignore
+            }
+            Err(mpsc::RecvTimeoutError::Timeout) => {
+                // Check if we should trigger a build (debounce)
+                if pending_build && last_change.elapsed() >= debounce_duration {
+                    pending_build = false;
+                    
+                    println!();
+                    info("Rebuilding...");
+                    
+                    let request = ExecutionRequest {
+                        base_directory: base_dir.clone(),
+                        goals: build_goals.clone(),
+                        system_properties: std::collections::HashMap::new(),
+                        show_errors: true,
+                        offline: false,
+                    };
+                    
+                    match executor.execute(request) {
+                        Ok(result) => {
+                            if result.success {
+                                success("Build succeeded");
+                            } else {
+                                warn("Build had errors");
+                                for err in &result.errors {
+                                    warn(err);
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            warn(&format!("Build failed: {}", e));
+                        }
+                    }
+                    println!();
+                }
+            }
+            Err(mpsc::RecvTimeoutError::Disconnected) => {
+                return Err(anyhow::anyhow!("File watcher disconnected"));
+            }
+        }
+    }
 }
