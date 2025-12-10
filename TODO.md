@@ -70,7 +70,7 @@ jbuild aims to be the **Cargo equivalent for Java** - a modern, fast, and user-f
 - [x] **`jbuild tree`** - Display dependency tree (like `cargo tree`)
   - [x] Parse pom.xml or build.gradle
   - [x] Display direct dependencies with scope
-  - [ ] Show transitive dependencies
+  - [x] Show transitive dependencies (downloads POMs to traverse)
 - [x] **`jbuild outdated`** - Show outdated dependencies
   - [x] Compare current versions with latest from Maven Central
   - [x] Support both Maven and Gradle

@@ -91,6 +91,7 @@ jbuild add group:artifact:version      # Add dependency with specific version
 jbuild add group:artifact --dev        # Add test dependency
 jbuild remove group:artifact           # Remove dependency
 jbuild tree                            # Show dependency tree
+jbuild tree                            # Shows transitive dependencies
 jbuild search <query>                  # Search Maven Central
 jbuild info group:artifact             # Show package details and versions
 jbuild outdated                        # Show outdated dependencies

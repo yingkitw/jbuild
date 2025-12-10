@@ -674,6 +674,136 @@ fn run_tree() -> anyhow::Result<()> {
     println!("[INFO] Dependency tree for {:?} project", build_system);
     println!();
     
+    // Shared helpers for transitive traversal
+    use jbuild::artifact::repository::{DefaultLocalRepository, LocalRepository};
+    use jbuild::resolver::{DependencyResolver, RemoteRepository};
+    use jbuild::resolver::downloader::ArtifactDownloader;
+    use std::collections::HashSet;
+    use jbuild::model::Dependency as MavenDep;
+    use jbuild::gradle::Dependency as GradleDep;
+
+    // Initialize resolver components
+    let local_repo = DefaultLocalRepository::default();
+    let resolver = DependencyResolver::new(Box::new(local_repo));
+    let downloader = ArtifactDownloader::new();
+    let remotes: Vec<RemoteRepository> = resolver.remote_repositories().to_vec();
+
+    // Print helpers
+    fn print_node(prefix: &str, is_last: bool, line: &str) {
+        let connector = if is_last { "└──" } else { "├──" };
+        println!("{}{} {}", prefix, connector, line);
+    }
+
+    // Fetch children of a Maven dependency by downloading its POM
+    fn maven_dep_children(
+        dep: &MavenDep,
+        downloader: &ArtifactDownloader,
+        remotes: &[RemoteRepository],
+    ) -> anyhow::Result<Vec<MavenDep>> {
+        use jbuild::artifact::Artifact;
+        use std::path::PathBuf;
+
+        let version = if let Some(v) = &dep.version {
+            v
+        } else {
+            return Ok(vec![]);
+        };
+
+        // Build POM artifact
+        let mut pom_artifact = Artifact::new(&dep.group_id, &dep.artifact_id, version);
+        pom_artifact.coordinates.packaging = Some("pom".to_string());
+
+        // Determine local path for the POM (use default local repo layout)
+        let pom_local_path: PathBuf = {
+            let local = DefaultLocalRepository::default();
+            local.artifact_path(&pom_artifact)
+        };
+
+        // Download POM if missing
+        if !pom_local_path.exists() {
+            if let Some(repo) = remotes.first() {
+                downloader.download_pom(&pom_artifact, repo, &pom_local_path)?;
+            }
+        }
+
+        if !pom_local_path.exists() {
+            return Ok(vec![]);
+        }
+
+        let pom_content = std::fs::read_to_string(&pom_local_path)?;
+        let model = jbuild::model::parser::parse_pom(&pom_content)?;
+        Ok(model
+            .dependencies
+            .map(|d| d.dependencies)
+            .unwrap_or_default())
+    }
+
+    fn walk_maven(
+        deps: &[MavenDep],
+        downloader: &ArtifactDownloader,
+        remotes: &[RemoteRepository],
+        prefix: &str,
+        visited: &mut HashSet<String>,
+    ) -> anyhow::Result<()> {
+        for (idx, dep) in deps.iter().enumerate() {
+            let id = format!("{}:{}", dep.group_id, dep.artifact_id);
+            let is_last = idx == deps.len() - 1;
+            let line = format!(
+                "{}:{}:{} ({})",
+                dep.group_id,
+                dep.artifact_id,
+                dep.version.as_deref().unwrap_or("?"),
+                dep.scope.as_deref().unwrap_or("compile")
+            );
+            print_node(prefix, is_last, &line);
+
+            if visited.contains(&id) {
+                continue;
+            }
+            visited.insert(id);
+
+            let mut child_prefix = prefix.to_string();
+            child_prefix.push_str(if is_last { "    " } else { "│   " });
+
+            let children = maven_dep_children(dep, downloader, remotes)?;
+            if !children.is_empty() {
+                walk_maven(&children, downloader, remotes, &child_prefix, visited)?;
+            }
+        }
+        Ok(())
+    }
+
+    // Gradle dependency -> MavenDep for reuse
+    fn gradle_to_maven(dep: &GradleDep) -> Option<MavenDep> {
+        if let (Some(group), Some(artifact), Some(version)) =
+            (&dep.group, &dep.artifact, &dep.version)
+        {
+            Some(MavenDep {
+                group_id: group.clone(),
+                artifact_id: artifact.clone(),
+                version: Some(version.clone()),
+                type_: None,
+                classifier: None,
+                scope: Some(dep.configuration.clone()),
+                optional: None,
+                exclusions: None,
+            })
+        } else {
+            None
+        }
+    }
+
+    fn walk_gradle(
+        deps: &[GradleDep],
+        downloader: &ArtifactDownloader,
+        remotes: &[RemoteRepository],
+        prefix: &str,
+        visited: &mut HashSet<String>,
+    ) -> anyhow::Result<()> {
+        let maven_like: Vec<MavenDep> = deps.iter().filter_map(gradle_to_maven).collect();
+        walk_maven(&maven_like, downloader, remotes, prefix, visited)
+    }
+
     match build_system {
         BuildSystem::Maven => {
             // Parse pom.xml
@@ -688,18 +818,8 @@ fn run_tree() -> anyhow::Result<()> {
             );
             
             if let Some(deps) = &model.dependencies {
-                let dep_count = deps.dependencies.len();
-                for (i, dep) in deps.dependencies.iter().enumerate() {
-                    let scope = dep.scope.as_deref().unwrap_or("compile");
-                    let prefix = if i == dep_count - 1 { "└──" } else { "├──" };
-                    println!("{} {}:{}:{} ({})",
-                        prefix,
-                        &dep.group_id,
-                        &dep.artifact_id,
-                        dep.version.as_deref().unwrap_or("?"),
-                        scope
-                    );
-                }
+                let mut visited = HashSet::new();
+                walk_maven(&deps.dependencies, &downloader, &remotes, "", &mut visited)?;
             }
         }
         BuildSystem::Gradle => {
@@ -712,17 +832,8 @@ fn run_tree() -> anyhow::Result<()> {
                 &project.name
             );
             
-            let dep_count = project.dependencies.len();
-            for (i, dep) in project.dependencies.iter().enumerate() {
-                let prefix = if i == dep_count - 1 { "└──" } else { "├──" };
-                println!("{} {}:{}:{} ({})",
-                    prefix,
-                    dep.group.as_deref().unwrap_or("?"),
-                    dep.artifact.as_deref().unwrap_or("?"),
-                    dep.version.as_deref().unwrap_or("?"),
-                    &dep.configuration
-                );
-            }
+            let mut visited = HashSet::new();
+            walk_gradle(&project.dependencies, &downloader, &remotes, "", &mut visited)?;
         }
     }
     
@@ -1413,7 +1524,7 @@ fn run_app(args: &[String], main_class_override: Option<&str>) -> anyhow::Result
 
 /// Update dependencies to latest compatible versions
 fn run_update(dependency: Option<&str>) -> anyhow::Result<()> {
-    use jbuild::runner::{fetch_latest_version, PackageInfo};
+    use jbuild::runner::fetch_latest_version;
     use jbuild::ui::{info, success, warn};
     
     let base_dir = std::env::current_dir()?;
