@@ -91,6 +91,9 @@ atty = "0.2"
 # File watching
 notify = "6.1"
 
+# TOML parsing for jbuild.toml
+toml = "0.8"
+
 [dev-dependencies]
 # Snapshot testing
 insta = "1.38"

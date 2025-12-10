@@ -30,7 +30,7 @@ jbuild aims to be the **Cargo equivalent for Java** - a modern, fast, and user-f
   - [x] Create standard directory structure if missing
 
 ### Unified Configuration (jbuild.toml)
-- [ ] **Native jbuild.toml format** - Simpler alternative to pom.xml/build.gradle
+- [x] **Native jbuild.toml format** - Simpler alternative to pom.xml/build.gradle
   ```toml
   [package]
   name = "my-app"
@@ -44,7 +44,9 @@ jbuild aims to be the **Cargo equivalent for Java** - a modern, fast, and user-f
   [dev-dependencies]
   "org.junit.jupiter:junit-jupiter" = "5.10.0"
   ```
-- [ ] **jbuild.lock** - Lock file for reproducible builds
+- [x] **jbuild.lock** - Lock file for reproducible builds
+  - [x] Auto-generate alongside jbuild.toml
+  - [x] Stores package name/version and deps/dev-deps
 - [ ] **Workspace support** - Multi-project workspaces like Cargo workspaces
 
 ### Enhanced CLI Commands

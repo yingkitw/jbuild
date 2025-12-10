@@ -84,6 +84,7 @@ jbuild test                      # Run tests
 jbuild run                       # Build and run main class
 jbuild watch                     # Watch for changes and auto-rebuild
 jbuild watch --test              # Watch and run tests on change
+jbuild                       # Uses pom.xml/build.gradle or jbuild.toml (auto-converts to pom)
 jbuild clean                     # Clean build outputs
 ```
 
@@ -100,6 +101,27 @@ jbuild info group:artifact             # Show package details and versions
 jbuild outdated                        # Show outdated dependencies
 jbuild update                          # Update all dependencies to latest
 jbuild update group:artifact           # Update specific dependency
+jbuild info group:artifact             # Show package details and versions
+```
+
+### Configuration
+```bash
+# Use jbuild.toml (auto-converted to pom.xml for build execution)
+cat > jbuild.toml <<'EOF'
+[package]
+name = "my-app"
+version = "0.1.0"
+java = "17"
+
+[dependencies]
+"org.slf4j:slf4j-api" = "2.0.9"
+
+[dev-dependencies]
+"org.junit.jupiter:junit-jupiter" = "5.10.0"
+EOF
+
+jbuild build   # will generate pom.xml from jbuild.toml if no pom/build.gradle present
+# jbuild.lock is auto-created from jbuild.toml for reproducible builds
 ```
 
 ### Code Quality

@@ -7,6 +7,7 @@ use jbuild::maven::core::MavenBuildExecutor;
 use jbuild::gradle::core::GradleExecutor;
 use jbuild::checkstyle::{Checker, ConfigurationLoader, DefaultLogger};
 use jbuild::ui::{info, success, error, warn, build_success, build_failure};
+use jbuild::config::JbuildConfig;
 
 /// jbuild - A high-performance build tool for Java projects (Maven & Gradle)
 #[derive(Parser)]
@@ -218,6 +219,9 @@ fn main() -> anyhow::Result<()> {
     } else {
         std::env::current_dir()?
     };
+
+    // If jbuild.toml exists (and no pom/build.gradle), generate a temporary pom.xml
+    ensure_pom_from_jbuild(&base_dir)?;
 
     // Detect build system
     let build_system = BuildSystem::detect(&base_dir)
@@ -1800,6 +1804,31 @@ fn run_outdated() -> anyhow::Result<()> {
         println!("[INFO] Run 'jbuild update' to update them");
     }
     
+    Ok(())
+}
+
+/// Generate pom.xml from jbuild.toml if needed so existing Maven pipeline can run.
+fn ensure_pom_from_jbuild(base_dir: &std::path::Path) -> anyhow::Result<()> {
+    use std::fs;
+    let pom_path = base_dir.join("pom.xml");
+    let gradle_path = base_dir.join("build.gradle");
+    let gradle_kts_path = base_dir.join("build.gradle.kts");
+    let jbuild_path = base_dir.join("jbuild.toml");
+
+    // If a build file already exists, do nothing
+    if pom_path.exists() || gradle_path.exists() || gradle_kts_path.exists() {
+        return Ok(());
+    }
+
+    if !jbuild_path.exists() {
+        return Ok(());
+    }
+
+    info("Detected jbuild.toml. Generating pom.xml for build execution...");
+    let cfg = JbuildConfig::from_file(&jbuild_path)?;
+    let pom_xml = cfg.to_pom_xml();
+    fs::write(&pom_path, pom_xml)?;
+    info(&format!("Generated {}", pom_path.display()));
     Ok(())
 }
 

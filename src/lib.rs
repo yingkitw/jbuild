@@ -30,6 +30,9 @@ pub mod ui;
 // Application runner
 pub mod runner;
 
+// Config (jbuild.toml)
+pub mod config;
+
 // Re-export Gradle types
 pub use gradle::{GradleProject, Task as GradleTask, Dependency as GradleDependency, parse_gradle_build_script};
 
