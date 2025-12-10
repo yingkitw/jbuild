@@ -56,17 +56,24 @@ jbuild aims to be the **Cargo equivalent for Java** - a modern, fast, and user-f
 - [x] **`jbuild remove <dependency>`** - Remove dependency from project
   - [x] Parse groupId:artifactId format
   - [x] Remove from pom.xml or build.gradle
-- [ ] **`jbuild update`** - Update dependencies to latest compatible versions
+- [x] **`jbuild update`** - Update dependencies to latest compatible versions
+  - [x] Update all dependencies or specific dependency
+  - [x] Support both Maven and Gradle
+  - [x] Fetch latest versions from Maven Central
 - [x] **`jbuild search <query>`** - Search Maven Central for packages
   - [x] Query Maven Central Search API
   - [x] Display package name, version, and update date
   - [x] Configurable result limit (`-n`)
-- [ ] **`jbuild info <package>`** - Show package details and versions
+- [x] **`jbuild info <package>`** - Show package details and versions
+  - [x] Display latest version and update date
+  - [x] Show all available versions
 - [x] **`jbuild tree`** - Display dependency tree (like `cargo tree`)
   - [x] Parse pom.xml or build.gradle
   - [x] Display direct dependencies with scope
   - [ ] Show transitive dependencies
-- [ ] **`jbuild outdated`** - Show outdated dependencies
+- [x] **`jbuild outdated`** - Show outdated dependencies
+  - [x] Compare current versions with latest from Maven Central
+  - [x] Support both Maven and Gradle
 - [ ] **`jbuild audit`** - Security vulnerability scanning
 
 ### Build & Run

@@ -55,6 +55,10 @@ jbuild search slf4j              # Search Maven Central
 jbuild add org.slf4j:slf4j-api:2.0.9
 jbuild remove org.slf4j:slf4j-api
 jbuild tree                      # Show dependency tree
+jbuild info org.slf4j:slf4j-api  # Show package details
+jbuild outdated                  # Check for outdated dependencies
+jbuild update                    # Update all dependencies
+```
 
 # Code quality
 jbuild lint                      # Run Checkstyle checks
@@ -88,6 +92,10 @@ jbuild add group:artifact --dev        # Add test dependency
 jbuild remove group:artifact           # Remove dependency
 jbuild tree                            # Show dependency tree
 jbuild search <query>                  # Search Maven Central
+jbuild info group:artifact             # Show package details and versions
+jbuild outdated                        # Show outdated dependencies
+jbuild update                          # Update all dependencies to latest
+jbuild update group:artifact           # Update specific dependency
 ```
 
 ### Code Quality
@@ -109,6 +117,9 @@ jbuild lint src/main/java        # Check specific directory
 | **Search Packages** | `jbuild search` | ❌ | ❌ |
 | **Remove Dependency** | `jbuild remove` | Manual XML edit | Manual DSL edit |
 | **Dep Tree** | `jbuild tree` | `mvn dependency:tree` | `gradle dependencies` |
+| **Package Info** | `jbuild info` | ❌ | ❌ |
+| **Check Outdated** | `jbuild outdated` | ❌ | ❌ |
+| **Update Dependencies** | `jbuild update` | Manual edit | Manual edit |
 | **Linting** | `jbuild lint` | Plugin required | Plugin required |
 | **Project Creation** | `jbuild new` | `mvn archetype:generate` | `gradle init` |
 | **Multi-module** | ✅ Both systems | ✅ Reactor | ✅ Composite builds |

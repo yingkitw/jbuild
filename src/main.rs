@@ -143,6 +143,19 @@ enum Commands {
         /// Shell to generate completions for (bash, zsh, fish, powershell, elvish)
         shell: clap_complete::Shell,
     },
+    /// Update dependencies to latest compatible versions
+    Update {
+        /// Update only specific dependency (groupId:artifactId)
+        #[arg(value_name = "DEPENDENCY")]
+        dependency: Option<String>,
+    },
+    /// Show package details and versions
+    Info {
+        /// Package in format groupId:artifactId
+        package: String,
+    },
+    /// Show outdated dependencies
+    Outdated,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -170,6 +183,15 @@ fn main() -> anyhow::Result<()> {
         }
         Some(Commands::Run { args, main_class }) => {
             return run_app(args, main_class.as_deref());
+        }
+        Some(Commands::Update { dependency }) => {
+            return run_update(dependency.as_deref());
+        }
+        Some(Commands::Info { package }) => {
+            return run_info(&package);
+        }
+        Some(Commands::Outdated) => {
+            return run_outdated();
         }
         _ => {}
     }
@@ -216,7 +238,9 @@ fn main() -> anyhow::Result<()> {
             Some(Commands::Lint { .. }) | Some(Commands::New { .. }) | 
             Some(Commands::Tree) | Some(Commands::Add { .. }) |
             Some(Commands::Init { .. }) | Some(Commands::Remove { .. }) |
-            Some(Commands::Search { .. }) | Some(Commands::Completions { .. }) => unreachable!(), // Handled earlier
+            Some(Commands::Search { .. }) | Some(Commands::Completions { .. }) |
+            Some(Commands::Update { .. }) | Some(Commands::Info { .. }) |
+            Some(Commands::Outdated) => unreachable!(), // Handled earlier
             None => vec!["compile".to_string()],
         }
     };
@@ -1384,5 +1408,258 @@ fn run_app(args: &[String], main_class_override: Option<&str>) -> anyhow::Result
     // Run the application
     run_java_app(&base_dir, &main_class, &classpath, args)?;
 
+    Ok(())
+}
+
+/// Update dependencies to latest compatible versions
+fn run_update(dependency: Option<&str>) -> anyhow::Result<()> {
+    use jbuild::runner::{fetch_latest_version, PackageInfo};
+    use jbuild::ui::{info, success, warn};
+    
+    let base_dir = std::env::current_dir()?;
+    let build_system = BuildSystem::detect(&base_dir)
+        .ok_or_else(|| anyhow::anyhow!("No build system detected. Looking for pom.xml or build.gradle"))?;
+    
+    match build_system {
+        BuildSystem::Maven => {
+            let pom_path = base_dir.join("pom.xml");
+            let pom_content = std::fs::read_to_string(&pom_path)?;
+            let model = jbuild::model::parser::parse_pom(&pom_content)?;
+            
+            if let Some(deps) = &model.dependencies {
+                let mut updated_count = 0;
+                let mut new_content = pom_content.clone();
+                
+                for dep in &deps.dependencies {
+                    // Skip if filtering by specific dependency
+                    if let Some(filter) = dependency {
+                        let parts: Vec<&str> = filter.split(':').collect();
+                        if parts.len() >= 2 {
+                            if dep.group_id != parts[0] || dep.artifact_id != parts[1] {
+                                continue;
+                            }
+                        }
+                    }
+                    
+                    if let Some(current_version) = &dep.version {
+                        info(&format!("Checking {}:{}...", dep.group_id, dep.artifact_id));
+                        
+                        match fetch_latest_version(&dep.group_id, &dep.artifact_id) {
+                            Ok(latest) => {
+                                if latest != *current_version {
+                                    info(&format!("  {} -> {}", current_version, latest));
+                                    // Update version in XML
+                                    let old_pattern = format!(
+                                        "<groupId>{}</groupId>\n            <artifactId>{}</artifactId>\n            <version>{}</version>",
+                                        dep.group_id, dep.artifact_id, current_version
+                                    );
+                                    let new_pattern = format!(
+                                        "<groupId>{}</groupId>\n            <artifactId>{}</artifactId>\n            <version>{}</version>",
+                                        dep.group_id, dep.artifact_id, latest
+                                    );
+                                    new_content = new_content.replace(&old_pattern, &new_pattern);
+                                    updated_count += 1;
+                                } else {
+                                    info(&format!("  {} (already latest)", current_version));
+                                }
+                            }
+                            Err(e) => {
+                                warn(&format!("  Failed to fetch latest version: {}", e));
+                            }
+                        }
+                    }
+                }
+                
+                if updated_count > 0 {
+                    std::fs::write(&pom_path, new_content)?;
+                    success(&format!("Updated {} dependencies", updated_count));
+                } else {
+                    info("All dependencies are up to date");
+                }
+            }
+        }
+        BuildSystem::Gradle => {
+            let build_path = base_dir.join("build.gradle");
+            let build_content = std::fs::read_to_string(&build_path)?;
+            let project = jbuild::gradle::model::parse_gradle_build_script(&build_path, &base_dir)?;
+            
+            let mut updated_count = 0;
+            let mut new_content = build_content.clone();
+            
+            for dep in &project.dependencies {
+                // Skip if filtering by specific dependency
+                if let Some(filter) = dependency {
+                    let parts: Vec<&str> = filter.split(':').collect();
+                    if parts.len() >= 2 {
+                        if dep.group.as_ref().map(|g| g.as_str()) != Some(parts[0]) ||
+                           dep.artifact.as_ref().map(|a| a.as_str()) != Some(parts[1]) {
+                            continue;
+                        }
+                    }
+                }
+                
+                if let (Some(group), Some(artifact), Some(current_version)) = 
+                    (dep.group.as_ref(), dep.artifact.as_ref(), dep.version.as_ref()) {
+                    info(&format!("Checking {}:{}...", group, artifact));
+                    
+                    match fetch_latest_version(group, artifact) {
+                        Ok(latest) => {
+                            if latest != *current_version {
+                                info(&format!("  {} -> {}", current_version, latest));
+                                // Update version in Gradle file
+                                let old_pattern = format!("'{}:{}:{}'", group, artifact, current_version);
+                                let new_pattern = format!("'{}:{}:{}'", group, artifact, latest);
+                                new_content = new_content.replace(&old_pattern, &new_pattern);
+                                
+                                // Also handle double quotes
+                                let old_pattern2 = format!("\"{}:{}:{}\"", group, artifact, current_version);
+                                let new_pattern2 = format!("\"{}:{}:{}\"", group, artifact, latest);
+                                new_content = new_content.replace(&old_pattern2, &new_pattern2);
+                                
+                                updated_count += 1;
+                            } else {
+                                info(&format!("  {} (already latest)", current_version));
+                            }
+                        }
+                        Err(e) => {
+                            warn(&format!("  Failed to fetch latest version: {}", e));
+                        }
+                    }
+                }
+            }
+            
+            if updated_count > 0 {
+                std::fs::write(&build_path, new_content)?;
+                success(&format!("Updated {} dependencies", updated_count));
+            } else {
+                info("All dependencies are up to date");
+            }
+        }
+    }
+    
+    Ok(())
+}
+
+/// Show package details and versions
+fn run_info(package: &str) -> anyhow::Result<()> {
+    use jbuild::runner::fetch_package_info;
+    use jbuild::ui::{info, success};
+    
+    let parts: Vec<&str> = package.split(':').collect();
+    if parts.len() < 2 {
+        return Err(anyhow::anyhow!(
+            "Invalid package format. Use groupId:artifactId"
+        ));
+    }
+    
+    let group_id = parts[0];
+    let artifact_id = parts[1];
+    
+    info(&format!("Fetching information for {}:{}...", group_id, artifact_id));
+    
+    match fetch_package_info(group_id, artifact_id) {
+        Ok(pkg_info) => {
+            println!();
+            success(&format!("Package: {}:{}", pkg_info.group_id, pkg_info.artifact_id));
+            println!("Latest version: {}", pkg_info.latest_version);
+            println!("Last updated: {}", pkg_info.updated);
+            println!();
+            
+            if !pkg_info.all_versions.is_empty() {
+                println!("Available versions (showing first 20):");
+                for (i, version) in pkg_info.all_versions.iter().take(20).enumerate() {
+                    if i == 0 {
+                        println!("  * {} (latest)", version);
+                    } else {
+                        println!("    {}", version);
+                    }
+                }
+                if pkg_info.all_versions.len() > 20 {
+                    println!("  ... and {} more versions", pkg_info.all_versions.len() - 20);
+                }
+            }
+        }
+        Err(e) => {
+            return Err(anyhow::anyhow!("Failed to fetch package info: {}", e));
+        }
+    }
+    
+    Ok(())
+}
+
+/// Show outdated dependencies
+fn run_outdated() -> anyhow::Result<()> {
+    use jbuild::runner::fetch_latest_version;
+    use jbuild::ui::{info, warn};
+    
+    let base_dir = std::env::current_dir()?;
+    let build_system = BuildSystem::detect(&base_dir)
+        .ok_or_else(|| anyhow::anyhow!("No build system detected. Looking for pom.xml or build.gradle"))?;
+    
+    println!("[INFO] Checking for outdated dependencies in {:?} project", build_system);
+    println!();
+    
+    let mut outdated_count = 0;
+    
+    match build_system {
+        BuildSystem::Maven => {
+            let pom_path = base_dir.join("pom.xml");
+            let pom_content = std::fs::read_to_string(&pom_path)?;
+            let model = jbuild::model::parser::parse_pom(&pom_content)?;
+            
+            if let Some(deps) = &model.dependencies {
+                for dep in &deps.dependencies {
+                    if let Some(current_version) = &dep.version {
+                        match fetch_latest_version(&dep.group_id, &dep.artifact_id) {
+                            Ok(latest) => {
+                                if latest != *current_version {
+                                    println!("{}:{}", dep.group_id, dep.artifact_id);
+                                    println!("  Current: {}", current_version);
+                                    println!("  Latest:  {}", latest);
+                                    println!();
+                                    outdated_count += 1;
+                                }
+                            }
+                            Err(e) => {
+                                warn(&format!("Failed to check {}:{}: {}", dep.group_id, dep.artifact_id, e));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        BuildSystem::Gradle => {
+            let build_path = base_dir.join("build.gradle");
+            let project = jbuild::gradle::model::parse_gradle_build_script(&build_path, &base_dir)?;
+            
+            for dep in &project.dependencies {
+                if let (Some(group), Some(artifact), Some(current_version)) = 
+                    (dep.group.as_ref(), dep.artifact.as_ref(), dep.version.as_ref()) {
+                    match fetch_latest_version(group, artifact) {
+                        Ok(latest) => {
+                            if latest != *current_version {
+                                println!("{}:{}", group, artifact);
+                                println!("  Current: {}", current_version);
+                                println!("  Latest:  {}", latest);
+                                println!();
+                                outdated_count += 1;
+                            }
+                        }
+                        Err(e) => {
+                            warn(&format!("Failed to check {}:{}: {}", group, artifact, e));
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    if outdated_count == 0 {
+        info("All dependencies are up to date");
+    } else {
+        println!("[INFO] Found {} outdated dependencies", outdated_count);
+        println!("[INFO] Run 'jbuild update' to update them");
+    }
+    
     Ok(())
 }
