@@ -1,14 +1,21 @@
 [package]
 name = "jbuild"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2024"
 authors = ["Ying Kit WONG"]
 license = "Apache-2.0"
+homepage = "https://github.com/yingkitw/jbuild"
 repository = "https://github.com/yingkitw/jbuild"
+documentation = "https://docs.rs/jbuild"
 description = "High-performance Java build tool supporting Maven and Gradle"
-keywords = ["java", "maven", "gradle", "build", "pom"]
+keywords = ["java", "build", "maven", "gradle", "spring-boot"]
 categories = ["development-tools::build-utils", "command-line-utilities"]
 readme = "README.md"
+
+[package.metadata]
+supported_jdk = ["8", "11", "17", "21"]
+supported_jvm = ["openjdk", "temurin", "oraclejdk"]
+supported_runtimes = ["wildfly", "jboss-eap", "websphere-traditional", "websphere-liberty", "spring-boot"]
 
 [features]
 default = []

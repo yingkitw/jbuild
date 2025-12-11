@@ -75,6 +75,19 @@ jbuild new my-lib -t lib         # Create library project
 jbuild init                      # Initialize in existing directory
 ```
 
+### Workspace Support (Multi-Project Builds)
+```bash
+jbuild workspace new my-workspace     # Create new workspace
+cd my-workspace
+jbuild new core -t lib                # Create core library
+jbuild new app                        # Create application
+jbuild workspace add core             # Add projects to workspace
+jbuild workspace add app
+jbuild workspace list                 # List workspace members
+jbuild workspace build                # Build all projects in dependency order
+jbuild workspace build compile        # Build with specific goals
+```
+
 ### Building & Running
 ```bash
 jbuild build                     # Compile + test + package
@@ -122,6 +135,30 @@ EOF
 
 jbuild build   # will generate pom.xml from jbuild.toml if no pom/build.gradle present
 # jbuild.lock is auto-created from jbuild.toml for reproducible builds
+```
+
+### Workspace Configuration
+```toml
+# jbuild-workspace.toml - Workspace configuration
+members = [
+    "core",
+    "api",
+    "app"
+]
+
+default_members = [
+    "core",
+    "app"
+]
+
+[resolver]
+version_resolution = "Highest"  # Highest, Lowest, Fail
+conflict_resolution = "Highest" # Highest, Lowest, Fail
+
+[package]
+name = "my-workspace"
+version = "1.0.0"
+description = "Multi-project Java workspace"
 ```
 
 ### Code Quality

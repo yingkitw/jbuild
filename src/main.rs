@@ -7,7 +7,7 @@ use jbuild::maven::core::MavenBuildExecutor;
 use jbuild::gradle::core::GradleExecutor;
 use jbuild::checkstyle::{Checker, ConfigurationLoader, DefaultLogger};
 use jbuild::ui::{info, success, error, warn, build_success, build_failure};
-use jbuild::config::JbuildConfig;
+use jbuild::config::{JbuildConfig, Workspace};
 
 /// jbuild - A high-performance build tool for Java projects (Maven & Gradle)
 #[derive(Parser)]
@@ -168,6 +168,29 @@ enum Commands {
         #[arg(short = 'w', long = "watch")]
         watch_paths: Vec<PathBuf>,
     },
+    /// Create a new workspace
+    WorkspaceNew {
+        /// Workspace name
+        name: String,
+    },
+    /// Add a project to the workspace
+    WorkspaceAdd {
+        /// Project path to add
+        path: String,
+    },
+    /// Remove a project from the workspace
+    WorkspaceRemove {
+        /// Project path to remove
+        path: String,
+    },
+    /// List workspace members
+    WorkspaceList,
+    /// Build all workspace members
+    WorkspaceBuild {
+        /// Goals/tasks to execute
+        #[arg(trailing_var_arg = true)]
+        goals: Vec<String>,
+    },
 }
 
 fn main() -> anyhow::Result<()> {
@@ -193,9 +216,6 @@ fn main() -> anyhow::Result<()> {
         Some(Commands::Completions { shell }) => {
             return run_completions(*shell);
         }
-        Some(Commands::Run { args, main_class }) => {
-            return run_app(args, main_class.as_deref());
-        }
         Some(Commands::Update { dependency }) => {
             return run_update(dependency.as_deref());
         }
@@ -207,6 +227,21 @@ fn main() -> anyhow::Result<()> {
         }
         Some(Commands::Watch { test, watch_paths }) => {
             return run_watch(*test, watch_paths.clone());
+        }
+        Some(Commands::WorkspaceNew { name }) => {
+            return run_workspace_new(name);
+        }
+        Some(Commands::WorkspaceAdd { path }) => {
+            return run_workspace_add(path);
+        }
+        Some(Commands::WorkspaceRemove { path }) => {
+            return run_workspace_remove(path);
+        }
+        Some(Commands::WorkspaceList) => {
+            return run_workspace_list();
+        }
+        Some(Commands::WorkspaceBuild { goals }) => {
+            return run_workspace_build(goals.clone());
         }
         _ => {}
     }
@@ -259,7 +294,10 @@ fn main() -> anyhow::Result<()> {
             Some(Commands::Init { .. }) | Some(Commands::Remove { .. }) |
             Some(Commands::Search { .. }) | Some(Commands::Completions { .. }) |
             Some(Commands::Update { .. }) | Some(Commands::Info { .. }) |
-            Some(Commands::Outdated) | Some(Commands::Watch { .. }) | Some(Commands::Check) => unreachable!(), // Handled earlier
+            Some(Commands::Outdated) | Some(Commands::Watch { .. }) |
+            Some(Commands::Run { .. }) | Some(Commands::WorkspaceNew { .. }) |
+            Some(Commands::WorkspaceAdd { .. }) | Some(Commands::WorkspaceRemove { .. }) |
+            Some(Commands::WorkspaceList) | Some(Commands::WorkspaceBuild { .. }) => unreachable!(), // Handled earlier
             None => vec!["compile".to_string()],
         }
     };
@@ -1804,6 +1842,285 @@ fn run_outdated() -> anyhow::Result<()> {
         println!("[INFO] Run 'jbuild update' to update them");
     }
     
+    Ok(())
+}
+
+/// Create a new workspace
+fn run_workspace_new(name: &str) -> anyhow::Result<()> {
+    use std::fs;
+    use jbuild::config::JbuildWorkspace;
+
+    let workspace_dir = PathBuf::from(name);
+
+    if workspace_dir.exists() {
+        return Err(anyhow::anyhow!("Directory '{}' already exists", name));
+    }
+
+    info(&format!("Creating new workspace '{}'", name));
+
+    // Create workspace directory
+    fs::create_dir_all(&workspace_dir)?;
+
+    // Create default workspace configuration
+    let mut config = JbuildWorkspace::new();
+    config.workspace.package.name = Some(name.to_string());
+
+    // Save workspace configuration
+    let workspace_file = workspace_dir.join("jbuild-workspace.toml");
+    config.save_to_file(&workspace_file)?;
+
+    // Create .gitignore
+    let gitignore = r#"# Build outputs
+target/
+build/
+out/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+.project
+.classpath
+.settings/
+
+# OS files
+.DS_Store
+Thumbs.db
+"#;
+    fs::write(workspace_dir.join(".gitignore"), gitignore)?;
+
+    // Create README.md
+    let readme = format!(
+        r#"# {}
+
+A Java workspace managed with jbuild.
+
+## Structure
+
+This workspace contains multiple Java projects. Each project should be in its own subdirectory.
+
+## Building
+
+```bash
+# Build all projects in the workspace
+jbuild workspace build
+
+# Build specific goals
+jbuild workspace build compile test
+```
+
+## Adding Projects
+
+```bash
+# Create a new project
+jbuild new my-project
+
+# Or initialize an existing project
+cd existing-project
+jbuild init
+jbuild workspace add ../existing-project
+```
+
+## Commands
+
+- `jbuild workspace list` - List all workspace members
+- `jbuild workspace add <path>` - Add a project to the workspace
+- `jbuild workspace remove <path>` - Remove a project from the workspace
+- `jbuild workspace build` - Build all workspace members
+"#,
+        name
+    );
+    fs::write(workspace_dir.join("README.md"), readme)?;
+
+    success(&format!("Created workspace '{}' with jbuild-workspace.toml", name));
+    println!("Next steps:");
+    println!("  cd {}", name);
+    println!("  jbuild new my-app");
+    println!("  jbuild workspace build");
+
+    Ok(())
+}
+
+/// Add a project to the workspace
+fn run_workspace_add(path: &str) -> anyhow::Result<()> {
+    use jbuild::config::JbuildWorkspace;
+
+    let base_dir = std::env::current_dir()?;
+    let workspace_file = base_dir.join("jbuild-workspace.toml");
+
+    if !workspace_file.exists() {
+        return Err(anyhow::anyhow!("No jbuild-workspace.toml found. Run 'jbuild workspace new <name>' first."));
+    }
+
+    // Load existing workspace
+    let mut config = JbuildWorkspace::from_file(&workspace_file)?;
+
+    // Resolve the path to add
+    let member_path = if path.starts_with("./") || path.starts_with("../") || path.starts_with("/") {
+        path.to_string()
+    } else {
+        // Relative path from workspace root
+        path.to_string()
+    };
+
+    // Check if the project directory exists
+    let project_dir = base_dir.join(&member_path);
+    if !project_dir.exists() {
+        return Err(anyhow::anyhow!("Project directory '{}' does not exist", project_dir.display()));
+    }
+
+    // Check if it has a build system
+    if !project_dir.join("pom.xml").exists() && !project_dir.join("build.gradle").exists() && !project_dir.join("build.gradle.kts").exists() {
+        warn(&format!("Project '{}' doesn't appear to have a build file (pom.xml or build.gradle)", path));
+        warn("Make sure it's a valid Java project before adding to workspace");
+    }
+
+    // Add to workspace
+    config.add_member(member_path.clone());
+    config.save_to_file(&workspace_file)?;
+
+    success(&format!("Added project '{}' to workspace", path));
+    info("Run 'jbuild workspace build' to build all projects");
+
+    Ok(())
+}
+
+/// Remove a project from the workspace
+fn run_workspace_remove(path: &str) -> anyhow::Result<()> {
+    use jbuild::config::JbuildWorkspace;
+
+    let base_dir = std::env::current_dir()?;
+    let workspace_file = base_dir.join("jbuild-workspace.toml");
+
+    if !workspace_file.exists() {
+        return Err(anyhow::anyhow!("No jbuild-workspace.toml found in current directory"));
+    }
+
+    // Load existing workspace
+    let mut config = JbuildWorkspace::from_file(&workspace_file)?;
+
+    // Remove from workspace
+    config.remove_member(path);
+    config.save_to_file(&workspace_file)?;
+
+    success(&format!("Removed project '{}' from workspace", path));
+
+    Ok(())
+}
+
+/// List workspace members
+fn run_workspace_list() -> anyhow::Result<()> {
+    let base_dir = std::env::current_dir()?;
+
+    // Try to load workspace
+    match Workspace::from_directory(&base_dir) {
+        Ok(workspace) => {
+            if workspace.members.is_empty() {
+                info("Workspace has no members");
+                return Ok(());
+            }
+
+            println!("Workspace members:");
+            println!();
+
+            for member in &workspace.members {
+                let build_system = match member.build_system {
+                    Some(bs) => format!("{:?}", bs),
+                    None => "Unknown".to_string(),
+                };
+
+                println!("  {} ({})", member.name, build_system);
+                println!("    Path: {}", member.relative_path);
+
+                if !member.workspace_dependencies.is_empty() {
+                    println!("    Dependencies: {}", member.workspace_dependencies.join(", "));
+                }
+                println!();
+            }
+
+            info(&format!("Total: {} members", workspace.members.len()));
+        }
+        Err(_) => {
+            return Err(anyhow::anyhow!("No workspace found in current directory"));
+        }
+    }
+
+    Ok(())
+}
+
+/// Build all workspace members
+fn run_workspace_build(goals: Vec<String>) -> anyhow::Result<()> {
+    let base_dir = std::env::current_dir()?;
+
+    // Load workspace
+    let workspace = Workspace::from_directory(&base_dir)?;
+
+    if workspace.members.is_empty() {
+        info("Workspace has no members to build");
+        return Ok(());
+    }
+
+    info(&format!("Building workspace with {} members", workspace.members.len()));
+
+    // Get build order
+    let build_order = workspace.get_build_order();
+
+    // Build each member in order
+    for member in build_order {
+        info(&format!("Building {} ({})", member.name, member.relative_path));
+
+        // Change to member directory
+        let member_path = base_dir.join(&member.relative_path);
+        std::env::set_current_dir(&member_path)?;
+
+        // Detect and execute build
+        if let Some(build_system) = member.build_system {
+            let goals_to_use = if goals.is_empty() {
+                build_system.default_goals()
+            } else {
+                goals.clone()
+            };
+
+            let request = ExecutionRequest {
+                base_directory: member_path.clone(),
+                goals: goals_to_use,
+                system_properties: std::collections::HashMap::new(),
+                show_errors: true,
+                offline: false,
+            };
+
+            let executor: Box<dyn BuildExecutor> = match build_system {
+                BuildSystem::Maven => Box::new(MavenBuildExecutor::new()),
+                BuildSystem::Gradle => Box::new(GradleExecutor::new()),
+            };
+
+            match executor.execute(request) {
+                Ok(result) => {
+                    if result.success {
+                        success(&format!("✓ {} built successfully", member.name));
+                    } else {
+                        error(&format!("✗ {} build failed", member.name));
+                        for err in &result.errors {
+                            error(err);
+                        }
+                        return Err(anyhow::anyhow!("Workspace build failed"));
+                    }
+                }
+                Err(e) => {
+                    error(&format!("✗ {} build error: {}", member.name, e));
+                    return Err(e);
+                }
+            }
+        } else {
+            warn(&format!("Skipping {} - no build system detected", member.name));
+        }
+
+        // Return to workspace root
+        std::env::set_current_dir(&base_dir)?;
+    }
+
+    success("Workspace build completed successfully");
+
     Ok(())
 }
 

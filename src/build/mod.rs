@@ -16,7 +16,7 @@ pub mod goal_mapping;
 pub mod dependency_notation;
 pub mod property_conversion;
 
-pub use detection::*;
+pub use detection::BuildSystem;
 pub use executor::*;
 pub use wrapper::{BuildWrapper, WrapperType};
 pub use goal_mapping::GoalMapper;

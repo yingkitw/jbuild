@@ -31,6 +31,7 @@ jbuild aims to be the **Cargo equivalent for Java** - a modern, fast, and user-f
 
 ### Unified Configuration (jbuild.toml)
 - [x] **Native jbuild.toml format** - Simpler alternative to pom.xml/build.gradle
+- [x] **jbuild-workspace.toml** - Workspace configuration for multi-project builds
   ```toml
   [package]
   name = "my-app"
@@ -47,7 +48,11 @@ jbuild aims to be the **Cargo equivalent for Java** - a modern, fast, and user-f
 - [x] **jbuild.lock** - Lock file for reproducible builds
   - [x] Auto-generate alongside jbuild.toml
   - [x] Stores package name/version and deps/dev-deps
-- [ ] **Workspace support** - Multi-project workspaces like Cargo workspaces
+- [x] **Workspace support** - Multi-project workspaces like Cargo workspaces
+  - [x] jbuild-workspace.toml configuration format
+  - [x] Workspace detection and member resolution
+  - [x] Multi-project build execution with dependency ordering
+  - [x] Workspace CLI commands: new, add, remove, list, build
 
 ### Enhanced CLI Commands
 - [x] **`jbuild add <dependency>`** - Add dependency to project

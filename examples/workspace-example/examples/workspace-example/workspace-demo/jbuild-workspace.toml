@@ -1,0 +1,12 @@
+members = []
+default_members = []
+
+[resolver]
+version_resolution = "Highest"
+conflict_resolution = "Highest"
+
+[package]
+name = "workspace-demo"
+authors = []
+keywords = []
+categories = []

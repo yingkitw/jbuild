@@ -47,6 +47,14 @@ impl BuildSystem {
     pub fn build_file_path(&self, base_dir: &Path) -> PathBuf {
         base_dir.join(self.build_file_name())
     }
+
+    /// Get default goals/tasks for this build system
+    pub fn default_goals(&self) -> Vec<String> {
+        match self {
+            BuildSystem::Maven => vec!["compile".to_string()],
+            BuildSystem::Gradle => vec!["build".to_string()],
+        }
+    }
 }
 
 #[cfg(test)]
