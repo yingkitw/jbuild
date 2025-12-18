@@ -192,16 +192,18 @@ jbuild lint src/main/java        # Check specific directory
 
 The project is organized as a **single crate** with all modules under `src/`:
 
-- **model/**: POM/Gradle file parsing and data structures
+- **model/**: Maven POM model, property interpolation, and model building logic
 - **artifact/**: Artifact handling and coordinates
-- **core/**: Core execution engine and lifecycle
-- **resolver/**: Dependency resolution
-- **settings/**: Settings and configuration management
-- **plugin_api/**: Plugin API definitions
+- **core/**: Core execution engine, lifecycle management, and build optimization
+- **resolver/**: Dependency resolution (transitive, conflict, version range)
+- **settings/**: Maven settings.xml parsing and configuration
+- **plugin_api/**: Plugin API definitions and compatibility
 - **compiler/**: Java compiler integration (javac invocation, classpath management)
 - **packaging/**: JAR/WAR file creation and packaging
 - **testing/**: Test discovery, execution, and reporting
-- **main.rs**: Command-line interface
+- **cli.rs**: CLI definition (Clap structs)
+- **runner/**: Command implementation logic (modularized into submodules)
+- **main.rs**: CLI dispatcher (minimal entry point)
 
 ## Status
 

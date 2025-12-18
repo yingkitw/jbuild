@@ -150,6 +150,7 @@ jbuild aims to be the **Cargo equivalent for Java** - a modern, fast, and user-f
   - [x] Spinner for build operations
   - [x] Dependency resolution progress
 - [x] **Modular CLI Architecture** - Decoupled command implementations from main.rs
+- [x] **Centralized Model Building** - Unified inheritance and interpolation logic
 - [ ] **Helpful error messages** - Rust-style error messages with suggestions
   - [x] Basic colored error output
   - [ ] Source code context in errors

@@ -13,7 +13,13 @@ See [ORGANIZATION.md](ORGANIZATION.md) for detailed organization documentation.
 ```
 src/
 ├── lib.rs              # Library root, exports all public APIs
-├── main.rs             # CLI entry point
+├── main.rs             # CLI dispatcher (minimal entry point)
+├── cli.rs              # CLI definition (Clap structs)
+│
+├── runner/             # Command implementation logic
+│   ├── mod.rs          # Runner utilities
+│   ├── cli.rs          # Modularized CLI command implementations
+│   └── ...             # Other runner submodules (main_class, maven_central, etc.)
 │
 ├── build/              # Build system abstraction layer
 │   ├── detection.rs    # Build system detection (Maven vs Gradle)
@@ -137,12 +143,13 @@ MavenExecutionResult / GradleExecutionResult
 ### Key Design Decisions
 
 1. **Single Crate**: All code in one crate for simplicity and faster compilation
-2. **Module Organization**: Logical grouping matching Maven's Java structure, with Gradle support integrated
-3. **Error Handling**: Uses `anyhow` for application errors, `thiserror` for library errors
-4. **Async Support**: `tokio` for I/O operations (future use for parallel builds)
-5. **Type Safety**: Strong typing for coordinates, phases, and configurations
-6. **Compiler Integration**: Native Rust implementation for Java compiler invocation with classpath management
-7. **Dual Build System Support**: Unified artifact and dependency resolution for both Maven and Gradle
+2. **Modular CLI**: Decoupled CLI definition (`src/cli.rs`) from command implementation (`src/runner/cli.rs`), improving maintainability and testability.
+3. **Consolidated Model Building**: Centralized all POM inheritance, property merging, and interpolation logic into `ModelBuilder`, reducing redundancy.
+4. **Error Handling**: Uses `anyhow` for application errors, `thiserror` for library errors
+5. **Async Support**: `tokio` for I/O operations (future use for parallel builds)
+6. **Type Safety**: Strong typing for coordinates, phases, and configurations
+7. **Compiler Integration**: Native Rust implementation for Java compiler invocation with classpath management
+8. **Dual Build System Support**: Unified artifact and dependency resolution for both Maven and Gradle
 
 ### Data Flow
 
