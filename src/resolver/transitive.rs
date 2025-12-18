@@ -61,12 +61,24 @@ impl TransitiveDependencyResolver {
         if let Some(artifact) = self.resolver.resolve_dependency(dependency)? {
             resolved.push(artifact.clone());
 
-            // TODO: Load POM for this artifact to get its dependencies
-            // For now, we'll just resolve the direct dependency
-            // In a full implementation, we would:
-            // 1. Download the POM for this artifact
-            // 2. Parse it to get dependencies
-            // 3. Recursively resolve those dependencies
+            // Load POM for this artifact to get its dependencies
+            if let Ok(Some(model)) = self.resolver.resolve_pom(&artifact) {
+                if let Some(deps) = model.dependencies {
+                    for sub_dep in deps.dependencies {
+                        // Skip test/provided scope for transitive dependencies
+                        if sub_dep.scope.as_deref() == Some("test") || sub_dep.scope.as_deref() == Some("provided") {
+                            continue;
+                        }
+                        
+                        // Handle optional dependencies (usually skipped in transitive resolution)
+                        if sub_dep.optional == Some(true) {
+                            continue;
+                        }
+
+                        self.resolve_recursive(&sub_dep, resolved, visited)?;
+                    }
+                }
+            }
         }
 
         Ok(())

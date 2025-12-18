@@ -81,7 +81,10 @@ jbuild aims to be the **Cargo equivalent for Java** - a modern, fast, and user-f
 - [x] **`jbuild outdated`** - Show outdated dependencies
   - [x] Compare current versions with latest from Maven Central
   - [x] Support both Maven and Gradle
-- [ ] **`jbuild audit`** - Security vulnerability scanning
+- [x] **`jbuild audit`** - Security vulnerability scanning
+  - [x] Basic vulnerability scanning for dependencies
+  - [x] Warn about pre-release versions
+  - [x] Support both Maven and Gradle
 
 ### Build & Run
 - [x] **`jbuild run`** - Build and run main class (auto-detect or specify)
@@ -91,7 +94,9 @@ jbuild aims to be the **Cargo equivalent for Java** - a modern, fast, and user-f
   - [x] Build classpath for both Maven and Gradle
   - [x] Support passing arguments to application
   - [x] Auto-build project before running
-- [ ] **`jbuild run --example <name>`** - Run example programs
+- [x] **`jbuild run --example <name>`** - Run example programs
+  - [x] Search for example classes in common locations
+  - [x] Support example name matching (case-insensitive)
 - [x] **`jbuild watch`** - Watch mode with auto-rebuild on file changes
   - [x] Watch source files for changes
   - [x] Auto-rebuild on file changes with debouncing
@@ -101,7 +106,11 @@ jbuild aims to be the **Cargo equivalent for Java** - a modern, fast, and user-f
 - [ ] **`jbuild bench`** - Run JMH benchmarks
 
 ### Code Quality
-- [ ] **`jbuild fmt`** - Format code (integrate google-java-format or similar)
+- [x] **`jbuild fmt`** - Format code (integrate google-java-format or similar)
+  - [x] Format Java files using google-java-format
+  - [x] Support --check flag for dry-run
+  - [x] Auto-detect google-java-format in PATH
+  - [x] Format files in src/ by default
 - [x] **`jbuild lint`** - Run linters (Checkstyle integrated, SpotBugs/PMD pending)
   - [x] Checkstyle integration with tree-sitter Java parser
   - [x] 9 checks: EmptyCatchBlock, EmptyStatement, MissingSwitchDefault, MultipleVariableDeclarations, SimplifyBooleanReturn, PackageName, TypeName, RedundantImport, LineLength
@@ -117,8 +126,14 @@ jbuild aims to be the **Cargo equivalent for Java** - a modern, fast, and user-f
 - [ ] **`jbuild fix`** - Auto-fix common issues
 
 ### Documentation
-- [ ] **`jbuild doc`** - Generate Javadoc
-- [ ] **`jbuild doc --open`** - Generate and open in browser
+- [x] **`jbuild doc`** - Generate Javadoc
+  - [x] Generate Javadoc for all Java source files
+  - [x] Auto-detect javadoc from JAVA_HOME or PATH
+  - [x] Support custom output directory
+  - [x] Extract project name from pom.xml/build.gradle
+- [x] **`jbuild doc --open`** - Generate and open in browser
+  - [x] Open generated Javadoc in default browser
+  - [x] Support macOS, Linux, and Windows
 
 ### Publishing
 - [ ] **`jbuild publish`** - Publish to Maven Central or custom repository
@@ -134,6 +149,7 @@ jbuild aims to be the **Cargo equivalent for Java** - a modern, fast, and user-f
   - [x] Progress bar utilities for downloads
   - [x] Spinner for build operations
   - [x] Dependency resolution progress
+- [x] **Modular CLI Architecture** - Decoupled command implementations from main.rs
 - [ ] **Helpful error messages** - Rust-style error messages with suggestions
   - [x] Basic colored error output
   - [ ] Source code context in errors
@@ -151,6 +167,16 @@ jbuild aims to be the **Cargo equivalent for Java** - a modern, fast, and user-f
 ---
 
 ## Completed ✅
+
+### Recent Improvements ✨
+
+#### Modularization & Refactoring (Dec 2025)
+- [x] **Modular CLI** - Moved 2000+ lines of command implementation to `src/runner/cli.rs`.
+- [x] **Model Builder Consolidation** - Unified model merging logic in `ModelBuilder`.
+- [x] **Property Interpolation** - Implemented full support for `${property}` references.
+- [x] **Advanced Dependency Resolution** - Added full transitive resolution by parsing POM files.
+- [x] **Repository-based Parent Resolution** - Parents can now be resolved from Maven Central if not found locally.
+- [x] **Plugin Management** - Integrated `pluginManagement` for better version resolution.
 
 ### Maven Support
 - [x] Complete POM XML parsing with namespace handling

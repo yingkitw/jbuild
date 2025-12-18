@@ -9,7 +9,7 @@ use crate::model::profile::Profile;
 use crate::model::repository::Repository;
 
 /// The root element of a Maven POM (Project Object Model)
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename = "project")]
 #[serde(rename_all = "camelCase")]
 pub struct Model {

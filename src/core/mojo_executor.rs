@@ -106,14 +106,38 @@ impl MojoExecutor {
         &self,
         group_id: &str,
         artifact_id: &str,
-        _session: &MavenSession,
+        session: &MavenSession,
     ) -> Result<Option<String>> {
-        // TODO: Implement proper version resolution from:
         // 1. Project's pluginManagement
+        if let Some(project) = &session.current_project {
+            if let Some(build) = &project.model.build {
+                if let Some(plugin_mgmt) = &build.plugin_management {
+                    if let Some(plugins) = &plugin_mgmt.plugins {
+                        for plugin in plugins {
+                            if plugin.artifact_id == artifact_id {
+                                if let Some(gid) = &plugin.group_id {
+                                    if gid == group_id {
+                                        if let Some(version) = &plugin.version {
+                                            return Ok(Some(version.clone()));
+                                        }
+                                    }
+                                } else if group_id == "org.apache.maven.plugins" {
+                                    // Default groupId for Maven plugins
+                                    if let Some(version) = &plugin.version {
+                                        return Ok(Some(version.clone()));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         // 2. Repository metadata
+        // TODO: Try to resolve from repository metadata
+
         // 3. Default versions for standard plugins
-        
-        // For now, use default versions for standard Maven plugins
         let default_versions: std::collections::HashMap<&str, &str> = [
             ("maven-compiler-plugin", "3.11.0"),
             ("maven-surefire-plugin", "3.0.0"),
@@ -130,7 +154,6 @@ impl MojoExecutor {
             }
         }
 
-        // TODO: Try to resolve from repository metadata
         Ok(None)
     }
 }

@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 /// Project dependency
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub struct Dependency {
     /// The group ID of the dependency.
     #[serde(rename = "groupId")]

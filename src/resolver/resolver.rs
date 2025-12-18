@@ -52,18 +52,26 @@ impl DependencyResolver {
             version,
         );
 
+        self.resolve_artifact(&artifact)
+    }
+
+    /// Resolve an artifact
+    pub fn resolve_artifact(
+        &self,
+        artifact: &Artifact,
+    ) -> anyhow::Result<Option<Artifact>> {
         // Check local repository first
-        if self.local_repository.artifact_exists(&artifact) {
+        if self.local_repository.artifact_exists(artifact) {
             let mut resolved = artifact.clone();
-            resolved.file = Some(self.local_repository.artifact_path(&artifact));
+            resolved.file = Some(self.local_repository.artifact_path(artifact));
             return Ok(Some(resolved));
         }
 
         // Download from remote repositories
-        let local_path = self.local_repository.artifact_path(&artifact);
+        let local_path = self.local_repository.artifact_path(artifact);
         
         match self.downloader.download_from_repositories(
-            &artifact,
+            artifact,
             &self.remote_repositories,
             &local_path,
         ) {
@@ -73,10 +81,29 @@ impl DependencyResolver {
                 Ok(Some(resolved))
             }
             Err(e) => {
-                tracing::warn!("Failed to resolve dependency {}: {}", dependency.id(), e);
+                tracing::warn!("Failed to resolve artifact {}: {}", artifact, e);
                 Ok(None)
             }
         }
+    }
+
+    /// Resolve and parse a POM for an artifact
+    pub fn resolve_pom(
+        &self,
+        artifact: &Artifact,
+    ) -> anyhow::Result<Option<crate::model::Model>> {
+        let mut pom_artifact = artifact.clone();
+        pom_artifact.coordinates.packaging = Some("pom".to_string());
+        
+        if let Some(resolved) = self.resolve_artifact(&pom_artifact)? {
+            if let Some(path) = resolved.file {
+                let content = std::fs::read_to_string(path)?;
+                let model = crate::model::parser::parse_pom(&content)?;
+                return Ok(Some(model));
+            }
+        }
+        
+        Ok(None)
     }
 
     /// Resolve all dependencies for a project

@@ -30,6 +30,9 @@ pub mod ui;
 // Application runner
 pub mod runner;
 
+// CLI
+pub mod cli;
+
 // Config (jbuild.toml)
 pub mod config;
 
@@ -46,4 +49,5 @@ pub use plugin_api::{Mojo, Plugin, PluginDescriptor};
 pub use error::{MavenError, MavenResult};
 pub use testing_utils::{MockArtifactRepository, MockDependencyResolver, TestProjectBuilder};
 pub use ui::{info, success, error, warn, build_success, build_failure};
+pub use cli::{Cli, Commands};
 
