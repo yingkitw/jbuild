@@ -5,7 +5,6 @@ use super::value_objects::{ArtifactCoordinates, Scope, VersionRange};
 use crate::domain::shared::value_objects::Version;
 use anyhow::{anyhow, Result};
 use std::collections::{HashMap, HashSet};
-use std::path::PathBuf;
 
 /// Dependency resolution service
 /// Resolves transitive dependencies and handles version conflicts
@@ -53,7 +52,7 @@ impl<R: ArtifactRepository> DependencyResolver<R> {
         
         // Check for circular dependencies
         if processing.contains(&key) {
-            return Err(anyhow!("Circular dependency detected: {}", key));
+            return Err(anyhow!("Circular dependency detected: {key}"));
         }
         
         // Skip if already visited

@@ -205,7 +205,7 @@ java {} -cp "%CLASSPATH%" {} %*
             main_class
         );
 
-        let windows_path = scripts_dir.join(format!("{}.bat", app_name));
+        let windows_path = scripts_dir.join(format!("{app_name}.bat"));
         std::fs::write(&windows_path, windows_script)?;
 
         tracing::info!("Created start scripts in {:?}", scripts_dir);
@@ -227,7 +227,7 @@ java {} -cp "%CLASSPATH%" {} %*
         std::fs::create_dir_all(&bin_dir)?;
 
         // Copy application JAR
-        let jar_name = format!("{}.jar", app_name);
+        let jar_name = format!("{app_name}.jar");
         let source_jar = self.base_dir.join("build/libs").join(&jar_name);
         if source_jar.exists() {
             std::fs::copy(&source_jar, lib_dir.join(&jar_name))?;
@@ -267,7 +267,7 @@ java {} -cp "%CLASSPATH%" {} %*
             self.extension.application_default_jvm_args.join(" "),
             main_class
         );
-        std::fs::write(bin_dir.join(format!("{}.bat", app_name)), windows_script)?;
+        std::fs::write(bin_dir.join(format!("{app_name}.bat")), windows_script)?;
 
         tracing::info!("Installed distribution to {:?}", install_dir);
 
@@ -306,8 +306,7 @@ fn find_main_class_in_dir(dir: &PathBuf) -> Option<String> {
                 // Extract class name from file path
                 let relative = path.strip_prefix(dir).ok()?;
                 let class_name = relative.to_string_lossy()
-                    .replace('/', ".")
-                    .replace('\\', ".")
+                    .replace(['/', '\\'], ".")
                     .trim_end_matches(".java")
                     .to_string();
                 return Some(class_name);

@@ -96,7 +96,7 @@ impl MojoExecutor {
 
         // Execute mojo
         mojo.execute()
-            .map_err(|e| anyhow::anyhow!("Mojo execution failed: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Mojo execution failed: {e}"))?;
 
         Ok(())
     }

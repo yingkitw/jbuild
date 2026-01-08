@@ -2,7 +2,7 @@
 
 use super::aggregates::{GradleProject, GradleTask};
 use anyhow::{anyhow, Result};
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::HashSet;
 
 /// Gradle task execution service
 /// Orchestrates the execution of Gradle tasks with dependency resolution
@@ -17,7 +17,7 @@ impl TaskExecutor {
         // Get the task
         let task = project.tasks()
             .get(task_name)
-            .ok_or_else(|| anyhow!("Task {} not found", task_name))?;
+            .ok_or_else(|| anyhow!("Task {task_name} not found"))?;
         
         // Build execution order using topological sort
         let execution_order = Self::resolve_task_dependencies(project, task_name)?;
@@ -64,7 +64,7 @@ impl TaskExecutor {
         }
         
         if temp_mark.contains(task_name) {
-            return Err(anyhow!("Circular task dependency detected: {}", task_name));
+            return Err(anyhow!("Circular task dependency detected: {task_name}"));
         }
         
         temp_mark.insert(task_name.to_string());
@@ -288,7 +288,7 @@ mod tests {
         project.register_task(test2).unwrap();
         project.register_task(build).unwrap();
         
-        let plan = TaskExecutor::execute_tasks_parallel(&project, &vec!["build".to_string()]);
+        let plan = TaskExecutor::execute_tasks_parallel(&project, &["build".to_string()]);
         assert!(plan.is_ok());
         
         let plan = plan.unwrap();

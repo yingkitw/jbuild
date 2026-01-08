@@ -67,7 +67,7 @@ impl ArtifactDownloader {
         let response = self.client
             .get(metadata_url.as_str())
             .send()
-            .with_context(|| format!("Failed to fetch metadata from {}", metadata_url))?;
+            .with_context(|| format!("Failed to fetch metadata from {metadata_url}"))?;
 
         if !response.status().is_success() {
             return Err(anyhow::anyhow!(
@@ -138,14 +138,14 @@ impl ArtifactDownloader {
         // Create parent directory if needed
         if let Some(parent) = target_path.parent() {
             fs::create_dir_all(parent)
-                .with_context(|| format!("Failed to create directory: {:?}", parent))?;
+                .with_context(|| format!("Failed to create directory: {parent:?}"))?;
         }
 
         // Download the artifact
         let mut response = self.client
             .get(artifact_url.as_str())
             .send()
-            .with_context(|| format!("Failed to download artifact from {}", artifact_url))?;
+            .with_context(|| format!("Failed to download artifact from {artifact_url}"))?;
 
         if !response.status().is_success() {
             return Err(anyhow::anyhow!(
@@ -159,7 +159,7 @@ impl ArtifactDownloader {
         
         // Write to file with progress reporting
         let mut file = fs::File::create(target_path)
-            .with_context(|| format!("Failed to create file: {:?}", target_path))?;
+            .with_context(|| format!("Failed to create file: {target_path:?}"))?;
         
         let mut downloaded: u64 = 0;
         let mut buffer = [0u8; 8192];
@@ -173,7 +173,7 @@ impl ArtifactDownloader {
             }
             
             file.write_all(&buffer[..bytes_read])
-                .with_context(|| format!("Failed to write to {:?}", target_path))?;
+                .with_context(|| format!("Failed to write to {target_path:?}"))?;
             
             downloaded += bytes_read as u64;
             
@@ -207,7 +207,7 @@ impl ArtifactDownloader {
     ) -> Result<()> {
         // Read the artifact file
         let artifact_data = fs::read(artifact_path)
-            .with_context(|| format!("Failed to read artifact: {:?}", artifact_path))?;
+            .with_context(|| format!("Failed to read artifact: {artifact_path:?}"))?;
 
         // Calculate local checksums
         let mut sha1_hasher = Sha1::new();
@@ -222,9 +222,7 @@ impl ArtifactDownloader {
             let remote_sha1 = remote_sha1.trim();
             if local_sha1 != remote_sha1 {
                 return Err(anyhow::anyhow!(
-                    "SHA-1 checksum mismatch: local={}, remote={}",
-                    local_sha1,
-                    remote_sha1
+                    "SHA-1 checksum mismatch: local={local_sha1}, remote={remote_sha1}"
                 ));
             }
             tracing::debug!("SHA-1 checksum verified");
@@ -236,9 +234,7 @@ impl ArtifactDownloader {
             let remote_md5 = remote_md5.trim();
             if local_md5 != remote_md5 {
                 return Err(anyhow::anyhow!(
-                    "MD5 checksum mismatch: local={}, remote={}",
-                    local_md5,
-                    remote_md5
+                    "MD5 checksum mismatch: local={local_md5}, remote={remote_md5}"
                 ));
             }
             tracing::debug!("MD5 checksum verified");
@@ -251,7 +247,7 @@ impl ArtifactDownloader {
         let response = self.client
             .get(checksum_url)
             .send()
-            .with_context(|| format!("Failed to download checksum from {}", checksum_url))?;
+            .with_context(|| format!("Failed to download checksum from {checksum_url}"))?;
 
         if !response.status().is_success() {
             return Err(anyhow::anyhow!(
@@ -295,8 +291,7 @@ impl ArtifactDownloader {
             }
         }
         Err(anyhow::anyhow!(
-            "Failed to download {} from all repositories",
-            artifact
+            "Failed to download {artifact} from all repositories"
         ))
     }
 }

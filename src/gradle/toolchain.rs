@@ -114,14 +114,14 @@ impl JavaInstallation {
         };
 
         if !java_executable.exists() {
-            return Err(anyhow!("Java executable not found at {:?}", java_executable));
+            return Err(anyhow!("Java executable not found at {java_executable:?}"));
         }
 
         // Get version info
         let output = Command::new(&java_executable)
             .arg("-version")
             .output()
-            .map_err(|e| anyhow!("Failed to run java -version: {}", e))?;
+            .map_err(|e| anyhow!("Failed to run java -version: {e}"))?;
 
         let version_output = String::from_utf8_lossy(&output.stderr);
         let (version, major_version, vendor) = Self::parse_version_output(&version_output)?;

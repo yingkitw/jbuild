@@ -5,7 +5,6 @@ use jbuild::checkstyle::api::error::CheckstyleError;
 use jbuild::checkstyle::runner::{ConfigurationLoader, PropertiesLoader};
 use std::fs::File;
 use std::io::Write;
-use std::path::PathBuf;
 
 #[test]
 fn test_configuration_loader_nonexistent_file() {
@@ -92,7 +91,7 @@ fn test_properties_loader_empty_lines() {
     let temp_file = std::env::temp_dir().join("test_empty_lines.properties");
     let mut file = File::create(&temp_file).unwrap();
     writeln!(file, "key1=value1").unwrap();
-    writeln!(file, "").unwrap();
+    writeln!(file).unwrap();
     writeln!(file, "key2=value2").unwrap();
     drop(file);
 

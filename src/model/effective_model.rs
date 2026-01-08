@@ -98,7 +98,7 @@ impl EffectiveModelBuilder {
         }
 
         let parent_model = parse_pom_file(&parent_pom)
-            .with_context(|| format!("Failed to parse parent POM: {:?}", parent_pom))?;
+            .with_context(|| format!("Failed to parse parent POM: {parent_pom:?}"))?;
 
         // Cache and return
         self.model_cache.insert(parent_key, parent_model.clone());

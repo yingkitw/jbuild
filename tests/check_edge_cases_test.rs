@@ -35,7 +35,7 @@ fn test_line_length_check_edge_cases() {
     let over_length = "a".repeat(81);
     let file_text = FileText::new(PathBuf::from("test.java"), over_length);
     let violations = check.process(&PathBuf::from("test.java"), &file_text).unwrap();
-    assert!(violations.len() > 0);
+    assert!(!violations.is_empty());
 }
 
 #[test]

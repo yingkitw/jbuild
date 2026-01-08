@@ -162,7 +162,7 @@ impl std::fmt::Display for LifecyclePhase {
             LifecyclePhase::Deploy => "deploy",
             LifecyclePhase::Clean => "clean",
         };
-        write!(f, "{}", s)
+        write!(f, "{s}")
     }
 }
 

@@ -96,11 +96,10 @@ impl ProjectDependencyGraph {
         }
 
         for project_id in &self.project_ids {
-            if !visited.contains(project_id) {
-                if has_cycle(project_id, self, &mut visited, &mut rec_stack) {
+            if !visited.contains(project_id)
+                && has_cycle(project_id, self, &mut visited, &mut rec_stack) {
                     return true;
                 }
-            }
         }
 
         false

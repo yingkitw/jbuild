@@ -29,8 +29,8 @@ fn test_execution_request_with_many_properties_snapshot() {
     // Add multiple properties
     for i in 0..5 {
         builder = builder.with_property(
-            format!("property.{}", i),
-            format!("value-{}", i),
+            format!("property.{i}"),
+            format!("value-{i}"),
         );
     }
 

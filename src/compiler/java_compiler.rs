@@ -156,7 +156,7 @@ impl JavaCompiler {
 
         // Execute compilation
         let output = cmd.output()
-            .with_context(|| format!("Failed to execute javac: {:?}", javac_path))?;
+            .with_context(|| format!("Failed to execute javac: {javac_path:?}"))?;
 
         let stdout = String::from_utf8_lossy(&output.stdout).to_string();
         let stderr = String::from_utf8_lossy(&output.stderr).to_string();
@@ -165,7 +165,7 @@ impl JavaCompiler {
 
         if !success {
             tracing::error!("Compilation failed:\n{}", stderr);
-            return Err(anyhow::anyhow!("Java compilation failed: {}", stderr));
+            return Err(anyhow::anyhow!("Java compilation failed: {stderr}"));
         }
 
         if config.verbose && !stdout.is_empty() {

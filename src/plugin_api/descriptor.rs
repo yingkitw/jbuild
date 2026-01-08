@@ -110,7 +110,7 @@ impl PluginDescriptor {
                 }
                 Ok(Event::Eof) => break,
                 Err(e) => {
-                    return Err(anyhow::anyhow!("XML parse error: {}", e));
+                    return Err(anyhow::anyhow!("XML parse error: {e}"));
                 }
                 _ => {}
             }
@@ -127,15 +127,15 @@ impl PluginDescriptor {
     /// Extract plugin descriptor from a JAR file
     pub fn from_jar(jar_path: &std::path::Path) -> Result<Self> {
         let file = std::fs::File::open(jar_path)
-            .with_context(|| format!("Failed to open JAR file: {:?}", jar_path))?;
+            .with_context(|| format!("Failed to open JAR file: {jar_path:?}"))?;
         let mut archive = zip::ZipArchive::new(file)
-            .with_context(|| format!("Failed to read ZIP archive: {:?}", jar_path))?;
+            .with_context(|| format!("Failed to read ZIP archive: {jar_path:?}"))?;
 
         // Look for plugin.xml in META-INF/maven/
         let plugin_xml_path = "META-INF/maven/plugin.xml";
         
         let mut plugin_file = archive.by_name(plugin_xml_path)
-            .with_context(|| format!("Plugin descriptor not found in JAR: {}", plugin_xml_path))?;
+            .with_context(|| format!("Plugin descriptor not found in JAR: {plugin_xml_path}"))?;
 
         let mut xml_content = String::new();
         plugin_file.read_to_string(&mut xml_content)

@@ -171,9 +171,9 @@ impl DependencyContext {
 
     /// Check if a dependency is excluded
     pub fn is_excluded(&self, group_id: &str, artifact_id: &str) -> bool {
-        let key = format!("{}:{}", group_id, artifact_id);
+        let key = format!("{group_id}:{artifact_id}");
         self.exclusions.contains(&key) || 
-        self.exclusions.contains(&format!("{}:*", group_id)) ||
+        self.exclusions.contains(&format!("{group_id}:*")) ||
         self.exclusions.contains("*:*")
     }
 

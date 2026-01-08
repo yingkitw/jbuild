@@ -118,7 +118,7 @@ fn main() -> anyhow::Result<()> {
             }
         }
         Err(e) => {
-            ui_error(&format!("Build failed: {}", e));
+            ui_error(&format!("Build failed: {e}"));
             std::process::exit(1);
         }
     }
@@ -157,7 +157,7 @@ fn run_lint_internal(config_file: Option<&PathBuf>, files: &[PathBuf]) -> anyhow
 
     let error_count = checker.process(&files_to_check)?;
     if error_count > 0 {
-        ui_error(&format!("Checkstyle found {} error(s)", error_count));
+        ui_error(&format!("Checkstyle found {error_count} error(s)"));
         std::process::exit(1);
     } else {
         ui_success("Checkstyle completed with no errors");

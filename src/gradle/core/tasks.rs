@@ -11,7 +11,7 @@ pub fn execute_clean(project: &GradleProject) -> Result<()> {
     let build_dir = project.base_dir.join("build");
     if build_dir.exists() {
         std::fs::remove_dir_all(&build_dir)
-            .with_context(|| format!("Failed to remove build directory: {:?}", build_dir))?;
+            .with_context(|| format!("Failed to remove build directory: {build_dir:?}"))?;
         tracing::info!("Cleaned build directory");
     }
     Ok(())

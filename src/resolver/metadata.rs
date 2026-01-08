@@ -77,11 +77,11 @@ impl RepositoryMetadata {
     pub fn parse(metadata_xml: &str) -> Result<Self> {
         // Normalize XML namespaces
         let normalized = normalize_xml_namespaces(metadata_xml)
-            .map_err(|e| anyhow::anyhow!("Failed to normalize metadata XML: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to normalize metadata XML: {e}"))?;
         
         // Parse the metadata
         let metadata: RepositoryMetadata = from_str(&normalized)
-            .map_err(|e| anyhow::anyhow!("Failed to parse metadata XML: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to parse metadata XML: {e}"))?;
         
         Ok(metadata)
     }

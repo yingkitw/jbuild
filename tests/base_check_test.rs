@@ -1,6 +1,5 @@
 //! Tests for AbstractCheck base functionality
 
-use jbuild::checkstyle::api::ast::DetailAst;
 use jbuild::checkstyle::api::check::Check;
 use jbuild::checkstyle::api::config::{Configurable, Context, Contextualizable};
 use jbuild::checkstyle::checks::base::AbstractCheck;

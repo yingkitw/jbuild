@@ -85,14 +85,14 @@ mod maven_multi_module {
         // Verify all Maven module directories exist
         let modules = vec!["core", "api", "app"];
         for module in &modules {
-            let module_dir = examples_dir().join(format!("multi-module-maven/{}", module));
-            assert!(module_dir.exists(), "Module directory should exist: {:?}", module_dir);
+            let module_dir = examples_dir().join(format!("multi-module-maven/{module}"));
+            assert!(module_dir.exists(), "Module directory should exist: {module_dir:?}");
 
             let pom_file = module_dir.join("pom.xml");
-            assert!(pom_file.exists(), "POM file should exist: {:?}", pom_file);
+            assert!(pom_file.exists(), "POM file should exist: {pom_file:?}");
 
             let src_dir = module_dir.join("src/main/java");
-            assert!(src_dir.exists(), "Source directory should exist: {:?}", src_dir);
+            assert!(src_dir.exists(), "Source directory should exist: {src_dir:?}");
         }
     }
 }
@@ -185,10 +185,10 @@ mod gradle_multi_module {
 
         for subproject in &settings.subprojects {
             let dir = subproject.directory(&base_dir);
-            assert!(dir.exists(), "Subproject directory should exist: {:?}", dir);
+            assert!(dir.exists(), "Subproject directory should exist: {dir:?}");
 
             let build_file = dir.join("build.gradle");
-            assert!(build_file.exists(), "Build file should exist: {:?}", build_file);
+            assert!(build_file.exists(), "Build file should exist: {build_file:?}");
         }
     }
 }
@@ -221,12 +221,12 @@ mod build_system_comparison {
 
         // Both should have the same source files
         for module in &maven_modules {
-            let maven_src = examples_dir().join(format!("multi-module-maven/{}/src/main/java", module));
-            let gradle_src = examples_dir().join(format!("multi-module-gradle/{}/src/main/java", module));
+            let maven_src = examples_dir().join(format!("multi-module-maven/{module}/src/main/java"));
+            let gradle_src = examples_dir().join(format!("multi-module-gradle/{module}/src/main/java"));
 
             // At least one of them should exist (we created them)
             assert!(maven_src.exists() || gradle_src.exists(),
-                "Source directory should exist for module: {}", module);
+                "Source directory should exist for module: {module}");
         }
     }
 }

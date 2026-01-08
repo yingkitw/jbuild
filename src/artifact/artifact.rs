@@ -39,7 +39,7 @@ impl Artifact {
             coordinates: ArtifactCoordinates {
                 group_id: group_id.into(),
                 artifact_id: artifact_id.into(),
-                version: version.into(),
+                version,
                 packaging: None,
                 classifier: None,
             },
@@ -55,7 +55,7 @@ impl Artifact {
             .coordinates
             .classifier
             .as_ref()
-            .map(|c| format!("-{}", c))
+            .map(|c| format!("-{c}"))
             .unwrap_or_default();
         let extension = self
             .coordinates

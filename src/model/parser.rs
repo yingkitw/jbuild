@@ -25,7 +25,7 @@ pub fn parse_pom(pom_content: &str) -> Result<Model, ParseError> {
     
     // Parse the normalized XML
     let model: Model = from_str(&normalized)
-        .map_err(|e| ParseError::Xml(format!("XML deserialization error: {}", e)))?;
+        .map_err(|e| ParseError::Xml(format!("XML deserialization error: {e}")))?;
     
     // Validate required fields
     if model.group_id.is_empty() {
@@ -109,18 +109,18 @@ pub fn normalize_xml_namespaces(xml: &str) -> Result<String, ParseError> {
             Ok(Event::Text(e)) => {
                 match e.unescape() {
                     Ok(text) => writer.extend_from_slice(text.as_bytes()),
-                    Err(e) => return Err(ParseError::Xml(format!("XML unescape error: {}", e))),
+                    Err(e) => return Err(ParseError::Xml(format!("XML unescape error: {e}"))),
                 }
             }
             Ok(Event::Eof) => break,
             Ok(_) => {} // Ignore other events
-            Err(e) => return Err(ParseError::Xml(format!("XML parsing error: {}", e))),
+            Err(e) => return Err(ParseError::Xml(format!("XML parsing error: {e}"))),
         }
         buf.clear();
     }
     
     String::from_utf8(writer)
-        .map_err(|e| ParseError::InvalidPom(format!("Invalid UTF-8: {}", e)))
+        .map_err(|e| ParseError::InvalidPom(format!("Invalid UTF-8: {e}")))
 }
 
 /// Parse a POM file from a file path

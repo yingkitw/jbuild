@@ -46,11 +46,10 @@ impl VersionRangeResolver {
                     (if inclusive_upper { compare_versions(version, upper) <= 0 } 
                      else { compare_versions(version, upper) < 0 });
                 
-                if in_lower && in_upper {
-                    if best_version.is_none() || compare_versions(version, best_version.as_ref().unwrap()) > 0 {
+                if in_lower && in_upper
+                    && (best_version.is_none() || compare_versions(version, best_version.as_ref().unwrap()) > 0) {
                         best_version = Some(version.clone());
                     }
-                }
             }
             
             Ok(best_version)

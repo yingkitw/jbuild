@@ -42,7 +42,7 @@ impl PluginRegistry {
         artifact_id: &str,
         version: &str,
     ) -> Result<Option<Arc<dyn Plugin>>> {
-        let key = format!("{}:{}:{}", group_id, artifact_id, version);
+        let key = format!("{group_id}:{artifact_id}:{version}");
         
         // Check cache first
         {
@@ -87,7 +87,7 @@ impl PluginRegistry {
             .context("Failed to resolve plugin artifact")?;
 
         let artifact = artifact.ok_or_else(|| {
-            anyhow::anyhow!("Plugin {}:{}:{} not found", group_id, artifact_id, version)
+            anyhow::anyhow!("Plugin {group_id}:{artifact_id}:{version} not found")
         })?;
 
         let jar_path = artifact.file.ok_or_else(|| {
@@ -96,7 +96,7 @@ impl PluginRegistry {
 
         // Parse plugin descriptor
         let mut descriptor = PluginDescriptor::from_jar(&jar_path)
-            .with_context(|| format!("Failed to parse plugin descriptor from {:?}", jar_path))?;
+            .with_context(|| format!("Failed to parse plugin descriptor from {jar_path:?}"))?;
 
         // Resolve plugin dependencies from plugin POM
         let plugin_dependencies = self.resolve_plugin_dependencies(group_id, artifact_id, version)?;
@@ -146,7 +146,7 @@ impl PluginRegistry {
         // Parse POM to get dependencies
         let model = parse_pom(&std::fs::read_to_string(&pom_path)
             .context("Failed to read plugin POM")?)
-            .map_err(|e| anyhow::anyhow!("Failed to parse plugin POM: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to parse plugin POM: {e}"))?;
 
         // Extract dependencies from build section or root
         let mut dependencies = Vec::new();

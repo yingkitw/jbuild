@@ -140,7 +140,7 @@ impl GradleSettings {
 /// Parse a settings.gradle or settings.gradle.kts file
 pub fn parse_settings_file(settings_file: &Path, root_dir: &Path) -> Result<GradleSettings> {
     let content = std::fs::read_to_string(settings_file)
-        .with_context(|| format!("Failed to read settings file: {:?}", settings_file))?;
+        .with_context(|| format!("Failed to read settings file: {settings_file:?}"))?;
 
     parse_settings(&content, root_dir)
 }
@@ -180,8 +180,8 @@ pub fn parse_settings(content: &str, root_dir: &Path) -> Result<GradleSettings> 
         // Parse includeFlat statements
         if let Some(includes) = parse_include_flat(line) {
             for include in includes {
-                let mut config = SubprojectConfig::new(format!(":{}", include));
-                config.project_dir = Some(PathBuf::from(format!("../{}", include)));
+                let mut config = SubprojectConfig::new(format!(":{include}"));
+                config.project_dir = Some(PathBuf::from(format!("../{include}")));
                 settings.subprojects.push(config);
             }
         }

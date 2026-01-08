@@ -64,11 +64,11 @@ impl JarBuilder {
         // Create parent directory if needed
         if let Some(parent) = output_path.parent() {
             std::fs::create_dir_all(parent)
-                .with_context(|| format!("Failed to create directory: {:?}", parent))?;
+                .with_context(|| format!("Failed to create directory: {parent:?}"))?;
         }
 
         let file = File::create(output_path)
-            .with_context(|| format!("Failed to create JAR file: {:?}", output_path))?;
+            .with_context(|| format!("Failed to create JAR file: {output_path:?}"))?;
 
         let mut zip = ZipWriter::new(file);
         let options = FileOptions::default()
@@ -93,12 +93,12 @@ impl JarBuilder {
             if source.exists() {
                 let target_str = target.to_string_lossy().replace('\\', "/");
                 zip.start_file(&target_str, options)
-                    .with_context(|| format!("Failed to start file: {}", target_str))?;
+                    .with_context(|| format!("Failed to start file: {target_str}"))?;
                 
                 let content = std::fs::read(source)
-                    .with_context(|| format!("Failed to read resource: {:?}", source))?;
+                    .with_context(|| format!("Failed to read resource: {source:?}"))?;
                 zip.write_all(&content)
-                    .with_context(|| format!("Failed to write resource: {}", target_str))?;
+                    .with_context(|| format!("Failed to write resource: {target_str}"))?;
             }
         }
 
@@ -136,12 +136,12 @@ impl JarBuilder {
                 };
 
                 zip.start_file(&zip_path, options)
-                    .with_context(|| format!("Failed to start file in JAR: {}", zip_path))?;
+                    .with_context(|| format!("Failed to start file in JAR: {zip_path}"))?;
                 
                 let content = std::fs::read(path)
-                    .with_context(|| format!("Failed to read file: {:?}", path))?;
+                    .with_context(|| format!("Failed to read file: {path:?}"))?;
                 zip.write_all(&content)
-                    .with_context(|| format!("Failed to write file to JAR: {}", zip_path))?;
+                    .with_context(|| format!("Failed to write file to JAR: {zip_path}"))?;
             }
         }
 

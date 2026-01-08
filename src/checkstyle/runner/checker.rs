@@ -190,7 +190,7 @@ impl Checker {
 
     /// Read a file
     fn read_file(&self, path: &Path) -> CheckstyleResult<FileText> {
-        let content = std::fs::read_to_string(path).map_err(|e| CheckstyleError::Io(e))?;
+        let content = std::fs::read_to_string(path).map_err(CheckstyleError::Io)?;
         Ok(FileText::new(path.to_path_buf(), content))
     }
 }

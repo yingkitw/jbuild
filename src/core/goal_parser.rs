@@ -49,10 +49,10 @@ impl GoalParser {
                         goal: parts[2].to_string(),
                     })
                 }
-                _ => Err(format!("Invalid goal format: {}", goal_str)),
+                _ => Err(format!("Invalid goal format: {goal_str}")),
             }
         } else {
-            Err(format!("Unknown goal: {}", goal_str))
+            Err(format!("Unknown goal: {goal_str}"))
         }
     }
 

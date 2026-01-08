@@ -365,7 +365,7 @@ impl Workspace {
 
         for cap in re.captures_iter(content) {
             if let Some(dep_path) = cap.get(1) {
-                let dep_name = dep_path.as_str().split(':').last().unwrap_or(dep_path.as_str());
+                let dep_name = dep_path.as_str().split(':').next_back().unwrap_or(dep_path.as_str());
                 if members.iter().any(|m| m.name == dep_name) {
                     deps.push(dep_name.to_string());
                 }

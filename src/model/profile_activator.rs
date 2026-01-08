@@ -62,7 +62,7 @@ impl ProfileActivationContext {
         
         // Add environment variables
         for (key, value) in std::env::vars() {
-            props.insert(format!("env.{}", key), value);
+            props.insert(format!("env.{key}"), value);
         }
         
         props

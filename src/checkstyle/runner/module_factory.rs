@@ -50,9 +50,7 @@ impl ModuleFactory for DefaultModuleFactory {
         match name {
             "Checker" => {
                 // Checker is handled separately, not created here
-                Err(CheckstyleError::Configuration(format!(
-                    "Checker should not be created via factory"
-                )))
+                Err(CheckstyleError::Configuration("Checker should not be created via factory".to_string()))
             }
             "TreeWalker" => {
                 let file_set_check = TreeWalkerFileSetCheck::new();
@@ -95,8 +93,7 @@ impl ModuleFactory for DefaultModuleFactory {
                 Ok(ModuleInstance::Check(Arc::new(Mutex::new(check))))
             }
             _ => Err(CheckstyleError::Configuration(format!(
-                "Unknown module: {}",
-                name
+                "Unknown module: {name}"
             ))),
         }
     }

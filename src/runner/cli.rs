@@ -19,10 +19,10 @@ pub fn run_new(name: &str, template: &str, build_system: &str) -> Result<()> {
     let project_dir = PathBuf::from(name);
     
     if project_dir.exists() {
-        return Err(anyhow::anyhow!("Directory '{}' already exists", name));
+        return Err(anyhow::anyhow!("Directory '{name}' already exists"));
     }
     
-    println!("[INFO] Creating new {} project '{}'", template, name);
+    println!("[INFO] Creating new {template} project '{name}'");
     
     // Create directory structure
     fs::create_dir_all(project_dir.join("src/main/java/com/example"))?;
@@ -31,7 +31,7 @@ pub fn run_new(name: &str, template: &str, build_system: &str) -> Result<()> {
     fs::create_dir_all(project_dir.join("src/test/resources"))?;
     
     // Generate package name from project name
-    let package_name = name.replace('-', "_").replace('.', "_").to_lowercase();
+    let package_name = name.replace(['-', '.'], "_").to_lowercase();
     let class_name = to_pascal_case(name);
     
     // Create main Java file
@@ -53,10 +53,7 @@ public class {class_name} {{
         return "Hello, " + name + "!";
     }}
 }}
-"#,
-            package_name = package_name,
-            name = name,
-            class_name = class_name
+"#
         ),
         _ => format!(
             r#"package com.example.{package_name};
@@ -70,15 +67,12 @@ public class {class_name} {{
         System.out.println("Hello from {name}!");
     }}
 }}
-"#,
-            package_name = package_name,
-            name = name,
-            class_name = class_name
+"#
         ),
     };
     
     fs::write(
-        project_dir.join(format!("src/main/java/com/example/{}.java", class_name)),
+        project_dir.join(format!("src/main/java/com/example/{class_name}.java")),
         main_java,
     )?;
     
@@ -99,13 +93,11 @@ public class {class_name}Test {{
         assertTrue(true, "Example test");
     }}
 }}
-"#,
-        package_name = package_name,
-        class_name = class_name
+"#
     );
     
     fs::write(
-        project_dir.join(format!("src/test/java/com/example/{}Test.java", class_name)),
+        project_dir.join(format!("src/test/java/com/example/{class_name}Test.java")),
         test_java,
     )?;
     
@@ -141,14 +133,12 @@ application {{
 test {{
     useJUnitPlatform()
 }}
-"#,
-                package_name = package_name,
-                class_name = class_name
+"#
             );
             fs::write(project_dir.join("build.gradle"), build_gradle)?;
             
             // Create settings.gradle
-            let settings_gradle = format!("rootProject.name = '{}'\n", name);
+            let settings_gradle = format!("rootProject.name = '{name}'\n");
             fs::write(project_dir.join("settings.gradle"), settings_gradle)?;
         }
         _ => {
@@ -198,8 +188,7 @@ test {{
         </plugins>
     </build>
 </project>
-"#,
-                name = name
+"#
             );
             fs::write(project_dir.join("pom.xml"), pom_xml)?;
         }
@@ -248,22 +237,21 @@ jbuild run
 ```bash
 jbuild test
 ```
-"#,
-        name = name
+"#
     );
     fs::write(project_dir.join("README.md"), readme)?;
     
-    println!("[INFO] Created project '{}'", name);
+    println!("[INFO] Created project '{name}'");
     println!("[INFO] ");
     println!("[INFO] To get started:");
-    println!("[INFO]   cd {}", name);
+    println!("[INFO]   cd {name}");
     println!("[INFO]   jbuild build");
     
     Ok(())
 }
 
 fn to_pascal_case(s: &str) -> String {
-    s.split(|c: char| c == '-' || c == '_' || c == '.')
+    s.split(['-', '_', '.'])
         .filter(|s| !s.is_empty())
         .map(|word| {
             let mut chars = word.chars();
@@ -322,7 +310,7 @@ pub fn run_init(build_system: &str) -> Result<()> {
                         if main_class.is_none() && content.contains("public static void main") {
                             if let Some(class) = extract_class_name(&content) {
                                 if let Some(pkg) = extract_package_name(&content) {
-                                    main_class = Some(format!("{}.{}", pkg, class));
+                                    main_class = Some(format!("{pkg}.{class}"));
                                 } else {
                                     main_class = Some(class);
                                 }
@@ -377,13 +365,13 @@ test {{
                 if main_class.is_some() { "\n    id 'application'" } else { "" },
                 group_id,
                 if let Some(ref main) = main_class {
-                    format!("\napplication {{\n    mainClass = '{}'\n}}\n", main)
+                    format!("\napplication {{\n    mainClass = '{main}'\n}}\n")
                 } else {
                     String::new()
                 }
             );
             fs::write(base_dir.join("build.gradle"), build_gradle)?;
-            fs::write(base_dir.join("settings.gradle"), format!("rootProject.name = '{}'\n", project_name))?;
+            fs::write(base_dir.join("settings.gradle"), format!("rootProject.name = '{project_name}'\n"))?;
         }
         _ => {
             let pom_xml = format!(
@@ -433,17 +421,17 @@ test {{
 </project>
 "#,
                 group_id, project_name, project_name,
-                if let Some(ref main) = main_class { format!("\n        <exec.mainClass>{}</exec.mainClass>", main) } else { String::new() },
+                if let Some(ref main) = main_class { format!("\n        <exec.mainClass>{main}</exec.mainClass>") } else { String::new() },
                 if let Some(ref _main) = main_class {
-                    format!(r#"
+                    r#"
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.1.0</version>
                 <configuration>
-                    <mainClass>${{exec.mainClass}}</mainClass>
+                    <mainClass>${exec.mainClass}</mainClass>
                 </configuration>
-            </plugin>"#)
+            </plugin>"#.to_string()
                 } else { String::new() }
             );
             fs::write(base_dir.join("pom.xml"), pom_xml)?;
@@ -492,7 +480,7 @@ pub fn run_add(dependency: &str, dev: bool) -> Result<()> {
     let group_id = parts[0];
     let artifact_id = parts[1];
     let version = if parts.len() > 2 { parts[2].to_string() } else {
-        ui_info(&format!("Fetching latest version for {}:{}...", group_id, artifact_id));
+        ui_info(&format!("Fetching latest version for {group_id}:{artifact_id}..."));
         fetch_latest_version(group_id, artifact_id)?
     };
     
@@ -514,9 +502,9 @@ pub fn run_add(dependency: &str, dev: bool) -> Result<()> {
             );
             
             if pom_content.contains("</dependencies>") {
-                pom_content = pom_content.replace("</dependencies>", &format!("{}\n    </dependencies>", dep_xml));
+                pom_content = pom_content.replace("</dependencies>", &format!("{dep_xml}\n    </dependencies>"));
             } else {
-                pom_content = pom_content.replace("</project>", &format!("    <dependencies>\n{}\n    </dependencies>\n</project>", dep_xml));
+                pom_content = pom_content.replace("</project>", &format!("    <dependencies>\n{dep_xml}\n    </dependencies>\n</project>"));
             }
             fs::write(pom_path, pom_content)?;
         }
@@ -524,12 +512,12 @@ pub fn run_add(dependency: &str, dev: bool) -> Result<()> {
             let build_path = base_dir.join("build.gradle");
             let mut build_content = fs::read_to_string(&build_path)?;
             let config = if dev { "testImplementation" } else { "implementation" };
-            let dep_line = format!("    {} '{}:{}:{}'\n", config, group_id, artifact_id, version);
+            let dep_line = format!("    {config} '{group_id}:{artifact_id}:{version}'\n");
             
             if build_content.contains("dependencies {") {
-                build_content = build_content.replace("dependencies {", &format!("dependencies {{\n{}", dep_line));
+                build_content = build_content.replace("dependencies {", &format!("dependencies {{\n{dep_line}"));
             } else {
-                build_content.push_str(&format!("\ndependencies {{\n{}}}\n", dep_line));
+                build_content.push_str(&format!("\ndependencies {{\n{dep_line}}}\n"));
             }
             fs::write(build_path, build_content)?;
         }
@@ -553,7 +541,7 @@ pub fn run_remove(dependency: &str) -> Result<()> {
         BuildSystem::Maven => {
             let pom_path = base_dir.join("pom.xml");
             let pom_content = fs::read_to_string(&pom_path)?;
-            let pattern = format!("<artifactId>{}</artifactId>", artifact_id);
+            let pattern = format!("<artifactId>{artifact_id}</artifactId>");
             if !pom_content.contains(&pattern) {
                 ui_warn("Dependency not found");
                 return Ok(());
@@ -584,7 +572,7 @@ pub fn run_remove(dependency: &str) -> Result<()> {
         BuildSystem::Gradle => {
             let build_path = base_dir.join("build.gradle");
             let build_content = fs::read_to_string(&build_path)?;
-            let pattern = format!("{}:{}", group_id, artifact_id);
+            let pattern = format!("{group_id}:{artifact_id}");
             let new_content: Vec<&str> = build_content.lines()
                 .filter(|line| !line.contains(&pattern))
                 .collect();
@@ -599,7 +587,7 @@ pub fn run_tree() -> Result<()> {
     let base_dir = std::env::current_dir()?;
     let build_system = BuildSystem::detect(&base_dir).ok_or_else(|| anyhow::anyhow!("No build system detected"))?;
     
-    println!("[INFO] Dependency tree for {:?} project", build_system);
+    println!("[INFO] Dependency tree for {build_system:?} project");
     
     let local_repo = DefaultLocalRepository::default();
     let resolver = DependencyResolver::new(Box::new(local_repo));
@@ -654,7 +642,7 @@ fn walk_maven(deps: &[MavenDep], _downloader: &ArtifactDownloader, _remotes: &[R
 }
 
 pub fn run_search(query: &str, limit: usize) -> Result<()> {
-    ui_info(&format!("Searching Maven Central for '{}'...", query));
+    ui_info(&format!("Searching Maven Central for '{query}'..."));
     let results = crate::runner::maven_central::search_maven_central(query, limit)?;
     for res in results {
         println!("{}:{} ({})", res.group_id, res.artifact_id, res.version);
@@ -673,7 +661,7 @@ pub fn run_info(package: &str) -> Result<()> {
     println!("Updated: {}", info.updated);
     println!("\nVersions:");
     for v in info.all_versions.iter().take(10) {
-        println!("  - {}", v);
+        println!("  - {v}");
     }
     Ok(())
 }
@@ -703,7 +691,7 @@ pub fn run_update(dependency: Option<&str>) -> Result<()> {
                         ui_info(&format!("Checking {}:{}...", dep.group_id, dep.artifact_id));
                         if let Ok(latest) = fetch_latest_version(&dep.group_id, &dep.artifact_id) {
                             if latest != current {
-                                ui_info(&format!("  {} -> {}", current, latest));
+                                ui_info(&format!("  {current} -> {latest}"));
                                 let old = format!("<groupId>{}</groupId>\n            <artifactId>{}</artifactId>\n            <version>{}</version>", dep.group_id, dep.artifact_id, current);
                                 let new = format!("<groupId>{}</groupId>\n            <artifactId>{}</artifactId>\n            <version>{}</version>", dep.group_id, dep.artifact_id, latest);
                                 pom_content = pom_content.replace(&old, &new);
@@ -712,7 +700,7 @@ pub fn run_update(dependency: Option<&str>) -> Result<()> {
                         }
                     }
                 }
-                if updated > 0 { fs::write(pom_path, pom_content)?; ui_success(&format!("Updated {} dependencies", updated)); }
+                if updated > 0 { fs::write(pom_path, pom_content)?; ui_success(&format!("Updated {updated} dependencies")); }
                 else { ui_info("All dependencies are up to date"); }
             }
         }
@@ -727,18 +715,18 @@ pub fn run_update(dependency: Option<&str>) -> Result<()> {
                     if parts.len() >= 2 && (dep.group.as_deref() != Some(parts[0]) || dep.artifact.as_deref() != Some(parts[1])) { continue; }
                 }
                 if let (Some(g), Some(a), Some(current)) = (dep.group, dep.artifact, dep.version) {
-                    ui_info(&format!("Checking {}:{}...", g, a));
+                    ui_info(&format!("Checking {g}:{a}..."));
                     if let Ok(latest) = fetch_latest_version(&g, &a) {
                         if latest != current {
-                            ui_info(&format!("  {} -> {}", current, latest));
-                            build_content = build_content.replace(&format!("'{}:{}:{}'", g, a, current), &format!("'{}:{}:{}'", g, a, latest));
-                            build_content = build_content.replace(&format!("\"{}:{}:{}\"", g, a, current), &format!("\"{}:{}:{}\"", g, a, latest));
+                            ui_info(&format!("  {current} -> {latest}"));
+                            build_content = build_content.replace(&format!("'{g}:{a}:{current}'"), &format!("'{g}:{a}:{latest}'"));
+                            build_content = build_content.replace(&format!("\"{g}:{a}:{current}\""), &format!("\"{g}:{a}:{latest}\""));
                             updated += 1;
                         }
                     }
                 }
             }
-            if updated > 0 { fs::write(build_path, build_content)?; ui_success(&format!("Updated {} dependencies", updated)); }
+            if updated > 0 { fs::write(build_path, build_content)?; ui_success(&format!("Updated {updated} dependencies")); }
             else { ui_info("All dependencies are up to date"); }
         }
     }
@@ -834,7 +822,7 @@ pub fn run_doc(open: bool, output: Option<PathBuf>) -> Result<()> {
 pub fn run_audit() -> Result<()> {
     let base_dir = std::env::current_dir()?;
     let build_system = BuildSystem::detect(&base_dir).ok_or_else(|| anyhow::anyhow!("No build system detected"))?;
-    ui_info(&format!("Auditing dependencies for {:?} project...", build_system));
+    ui_info(&format!("Auditing dependencies for {build_system:?} project..."));
 
     let mut dependencies = Vec::new();
     match build_system {
@@ -859,13 +847,13 @@ pub fn run_audit() -> Result<()> {
     let mut vulnerabilities = 0;
     for (g, a, v) in &dependencies {
         if v.contains("alpha") || v.contains("beta") || v.contains("SNAPSHOT") {
-            ui_warn(&format!("  ⚠️  {}:{}:{} - Pre-release version may have issues", g, a, v));
+            ui_warn(&format!("  ⚠️  {g}:{a}:{v} - Pre-release version may have issues"));
             vulnerabilities += 1;
         }
     }
 
     if vulnerabilities == 0 { ui_success("No issues found"); }
-    else { ui_warn(&format!("Found {} potential issue(s)", vulnerabilities)); }
+    else { ui_warn(&format!("Found {vulnerabilities} potential issue(s)")); }
     Ok(())
 }
 
@@ -878,7 +866,7 @@ pub fn run_watch(run_tests: bool, watch_paths: Vec<PathBuf>) -> Result<()> {
     let build_system = BuildSystem::detect(&base_dir)
         .ok_or_else(|| anyhow::anyhow!("No build system detected. Looking for pom.xml or build.gradle"))?;
     
-    ui_info(&format!("Watching for changes in {:?} project...", build_system));
+    ui_info(&format!("Watching for changes in {build_system:?} project..."));
     ui_info("Press Ctrl+C to stop");
     println!();
     
@@ -986,8 +974,8 @@ pub fn run_workspace_new(name: &str) -> Result<()> {
     let base_dir = std::env::current_dir()?;
     let workspace_file = base_dir.join("jbuild-workspace.toml");
     if workspace_file.exists() { return Err(anyhow::anyhow!("Workspace already exists")); }
-    fs::write(workspace_file, format!("[package]\nname = \"{}\"\nversion = \"1.0.0\"\n\nmembers = []\n", name))?;
-    ui_success(&format!("Created workspace '{}'", name));
+    fs::write(workspace_file, format!("[package]\nname = \"{name}\"\nversion = \"1.0.0\"\n\nmembers = []\n"))?;
+    ui_success(&format!("Created workspace '{name}'"));
     Ok(())
 }
 
@@ -999,7 +987,7 @@ pub fn run_workspace_add(path: &str) -> Result<()> {
     let mut config = JbuildWorkspace::from_file(&workspace_file)?;
     config.add_member(path.to_string());
     config.save_to_file(&workspace_file)?;
-    ui_success(&format!("Added project '{}' to workspace", path));
+    ui_success(&format!("Added project '{path}' to workspace"));
     Ok(())
 }
 
@@ -1011,7 +999,7 @@ pub fn run_workspace_remove(path: &str) -> Result<()> {
     let mut config = JbuildWorkspace::from_file(&workspace_file)?;
     config.remove_member(path);
     config.save_to_file(&workspace_file)?;
-    ui_success(&format!("Removed project '{}' from workspace", path));
+    ui_success(&format!("Removed project '{path}' from workspace"));
     Ok(())
 }
 
@@ -1064,7 +1052,7 @@ pub fn run_run(args: Vec<String>, main_class: Option<String>, example: Option<St
 }
 
 pub fn run_example(base_dir: &Path, example_name: &str, args: &[String]) -> Result<()> {
-    ui_info(&format!("Looking for example: {}", example_name));
+    ui_info(&format!("Looking for example: {example_name}"));
     let example_dirs = [base_dir.join("src/main/java"), base_dir.join("examples")];
     let mut example_class: Option<String> = None;
     for dir in &example_dirs {
@@ -1076,7 +1064,7 @@ pub fn run_example(base_dir: &Path, example_name: &str, args: &[String]) -> Resu
                     if stem.eq_ignore_ascii_case(example_name) {
                         if let Ok(content) = fs::read_to_string(path) {
                             if let (Some(pkg), Some(class)) = (extract_package_name(&content), extract_class_name(&content)) {
-                                example_class = Some(format!("{}.{}", pkg, class));
+                                example_class = Some(format!("{pkg}.{class}"));
                                 break;
                             }
                         }
@@ -1086,7 +1074,7 @@ pub fn run_example(base_dir: &Path, example_name: &str, args: &[String]) -> Resu
         }
         if example_class.is_some() { break; }
     }
-    let main_class = example_class.ok_or_else(|| anyhow::anyhow!("Example '{}' not found", example_name))?;
+    let main_class = example_class.ok_or_else(|| anyhow::anyhow!("Example '{example_name}' not found"))?;
     run_app(args, Some(&main_class))
 }
 

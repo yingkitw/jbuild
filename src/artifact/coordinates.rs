@@ -74,10 +74,10 @@ impl fmt::Display for ArtifactCoordinates {
             self.group_id, self.artifact_id, self.version
         )?;
         if let Some(packaging) = &self.packaging {
-            write!(f, ":{}", packaging)?;
+            write!(f, ":{packaging}")?;
         }
         if let Some(classifier) = &self.classifier {
-            write!(f, ":{}", classifier)?;
+            write!(f, ":{classifier}")?;
         }
         Ok(())
     }

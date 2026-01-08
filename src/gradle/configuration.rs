@@ -123,7 +123,7 @@ impl ConfigurationDependency {
     pub fn project(path: impl Into<String>) -> Self {
         let path = path.into();
         Self {
-            notation: format!("project('{}')", path),
+            notation: format!("project('{path}')"),
             group: None,
             name: None,
             version: None,

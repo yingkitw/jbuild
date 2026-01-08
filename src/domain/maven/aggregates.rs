@@ -163,7 +163,7 @@ impl MavenProject {
     pub fn add_module(&mut self, module: String) -> Result<()> {
         // Invariant: No duplicate modules
         if self.modules.contains(&module) {
-            return Err(anyhow!("Module {} already exists", module));
+            return Err(anyhow!("Module {module} already exists"));
         }
         
         self.modules.push(module);

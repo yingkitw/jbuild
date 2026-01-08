@@ -75,8 +75,7 @@ impl Configurable for LineLengthCheck {
         if let Some(pattern_str) = config.get_property("ignorePattern") {
             if let Err(e) = self.set_ignore_pattern(pattern_str.clone()) {
                 return Err(crate::checkstyle::api::error::CheckstyleError::Configuration(format!(
-                    "Invalid ignorePattern: {}",
-                    e
+                    "Invalid ignorePattern: {e}"
                 )));
             }
         }

@@ -34,9 +34,7 @@ pub fn fetch_latest_version(group_id: &str, artifact_id: &str) -> Result<String>
     
     if docs.is_empty() {
         return Err(anyhow::anyhow!(
-            "No versions found for {}:{} on Maven Central",
-            group_id,
-            artifact_id
+            "No versions found for {group_id}:{artifact_id} on Maven Central"
         ));
     }
     
@@ -190,9 +188,7 @@ pub fn fetch_package_info(group_id: &str, artifact_id: &str) -> Result<PackageIn
     
     if docs.is_empty() {
         return Err(anyhow::anyhow!(
-            "Package {}:{} not found on Maven Central",
-            group_id,
-            artifact_id
+            "Package {group_id}:{artifact_id} not found on Maven Central"
         ));
     }
     

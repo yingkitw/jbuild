@@ -21,7 +21,7 @@ impl ProjectInitializationService {
         java_version: JavaVersion,
     ) -> Result<()> {
         if project_dir.exists() {
-            return Err(anyhow!("Directory already exists: {:?}", project_dir));
+            return Err(anyhow!("Directory already exists: {project_dir:?}"));
         }
         
         fs::create_dir_all(project_dir)?;
@@ -53,13 +53,13 @@ impl ProjectInitializationService {
          http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     
-    <groupId>{}</groupId>
-    <artifactId>{}</artifactId>
+    <groupId>{group_id}</groupId>
+    <artifactId>{name}</artifactId>
     <version>1.0.0</version>
     
     <properties>
-        <maven.compiler.source>{}</maven.compiler.source>
-        <maven.compiler.target>{}</maven.compiler.target>
+        <maven.compiler.source>{java_version}</maven.compiler.source>
+        <maven.compiler.target>{java_version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     
@@ -72,8 +72,7 @@ impl ProjectInitializationService {
         </dependency>
     </dependencies>
 </project>
-"#,
-            group_id, name, java_version, java_version
+"#
         );
         
         fs::write(project_dir.join("pom.xml"), pom_content)?;
@@ -112,13 +111,13 @@ dependencies {{
 }}
 "#,
             group_id,
-            format!("{}", java_version).replace('.', "_"),
-            format!("{}", java_version).replace('.', "_")
+            format!("{java_version}").replace('.', "_"),
+            format!("{java_version}").replace('.', "_")
         );
         
         fs::write(project_dir.join("build.gradle"), build_gradle)?;
         
-        let settings_gradle = format!("rootProject.name = '{}'", name);
+        let settings_gradle = format!("rootProject.name = '{name}'");
         fs::write(project_dir.join("settings.gradle"), settings_gradle)?;
         
         Self::create_standard_directories(project_dir)?;
@@ -135,17 +134,16 @@ dependencies {{
     ) -> Result<()> {
         let jbuild_toml = format!(
             r#"[project]
-name = "{}"
-group = "{}"
+name = "{name}"
+group = "{group_id}"
 version = "1.0.0"
 
 [java]
-version = "{}"
+version = "{java_version}"
 
 [dependencies]
 junit = {{ group = "junit", name = "junit", version = "4.13.2", scope = "test" }}
-"#,
-            name, group_id, java_version
+"#
         );
         
         fs::write(project_dir.join("jbuild.toml"), jbuild_toml)?;
@@ -170,15 +168,14 @@ junit = {{ group = "junit", name = "junit", version = "4.13.2", scope = "test" }
         fs::create_dir_all(&java_dir)?;
         
         let app_java = format!(
-            r#"package {};
+            r#"package {group_id};
 
 public class App {{
     public static void main(String[] args) {{
         System.out.println("Hello, World!");
     }}
 }}
-"#,
-            group_id
+"#
         );
         
         fs::write(java_dir.join("App.java"), app_java)?;

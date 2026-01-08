@@ -107,13 +107,13 @@ impl DependencyCoordinates {
             xml.push_str(&format!("    <version>{}</version>\n", self.coords.version));
         }
         if let Some(ref scope) = self.scope {
-            xml.push_str(&format!("    <scope>{}</scope>\n", scope));
+            xml.push_str(&format!("    <scope>{scope}</scope>\n"));
         }
         if let Some(ref classifier) = self.coords.classifier {
-            xml.push_str(&format!("    <classifier>{}</classifier>\n", classifier));
+            xml.push_str(&format!("    <classifier>{classifier}</classifier>\n"));
         }
         if let Some(ref ext) = self.extension {
-            xml.push_str(&format!("    <type>{}</type>\n", ext));
+            xml.push_str(&format!("    <type>{ext}</type>\n"));
         }
         
         xml.push_str("</dependency>");
@@ -187,8 +187,8 @@ pub fn maven_dep_to_gradle(
 ) -> (String, String) {
     let config = scope.map(ScopeMapper::maven_to_gradle).unwrap_or("implementation");
     let notation = match version {
-        Some(v) => format!("{}:{}:{}", group_id, artifact_id, v),
-        None => format!("{}:{}", group_id, artifact_id),
+        Some(v) => format!("{group_id}:{artifact_id}:{v}"),
+        None => format!("{group_id}:{artifact_id}"),
     };
     (config.to_string(), notation)
 }

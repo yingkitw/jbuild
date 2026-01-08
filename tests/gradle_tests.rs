@@ -19,7 +19,7 @@ fn test_parse_simple_gradle_build() {
     assert_eq!(project.plugins[0].id, "java");
     assert_eq!(project.group, Some("com.example".to_string()));
     assert_eq!(project.version, Some("1.0.0".to_string()));
-    assert!(project.repositories.len() > 0);
+    assert!(!project.repositories.is_empty());
     assert!(project.dependencies.len() >= 2);
 }
 

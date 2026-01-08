@@ -37,12 +37,12 @@ impl SourceSet {
             compile_classpath_config: if name == "main" {
                 "compileClasspath".to_string()
             } else {
-                format!("{}CompileClasspath", name)
+                format!("{name}CompileClasspath")
             },
             runtime_classpath_config: if name == "main" {
                 "runtimeClasspath".to_string()
             } else {
-                format!("{}RuntimeClasspath", name)
+                format!("{name}RuntimeClasspath")
             },
             name,
         }

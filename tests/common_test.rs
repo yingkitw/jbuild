@@ -73,15 +73,13 @@ fn test_base_version_extraction() {
 /// Test version sorting
 #[test]
 fn test_version_sorting() {
-    let mut versions = vec![
-        "1.0.0",
+    let mut versions = ["1.0.0",
         "1.0.1",
         "1.0.0-SNAPSHOT",
         "1.0.0-alpha",
         "1.0.0-beta",
         "2.0.0",
-        "1.1.0",
-    ];
+        "1.1.0"];
 
     versions.sort_by(|a, b| compare_versions(a, b).cmp(&0));
 

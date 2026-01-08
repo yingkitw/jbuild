@@ -17,9 +17,9 @@ use jbuild::checkstyle::runner::config_loader::ConfigurationLoader;
 use std::path::PathBuf;
 
 fn read_example_file(filename: &str) -> String {
-    let path = PathBuf::from(format!("examples/checkstyle-examples/{}", filename));
+    let path = PathBuf::from(format!("examples/checkstyle-examples/{filename}"));
     std::fs::read_to_string(&path)
-        .unwrap_or_else(|_| panic!("Failed to read example file: {}", filename))
+        .unwrap_or_else(|_| panic!("Failed to read example file: {filename}"))
 }
 
 fn create_context() -> Context {
@@ -314,8 +314,8 @@ fn test_all_examples_exist() {
     ];
     
     for example in examples {
-        let path = PathBuf::from(format!("examples/checkstyle-examples/{}", example));
-        assert!(path.exists(), "Example file should exist: {}", example);
+        let path = PathBuf::from(format!("examples/checkstyle-examples/{example}"));
+        assert!(path.exists(), "Example file should exist: {example}");
     }
 }
 

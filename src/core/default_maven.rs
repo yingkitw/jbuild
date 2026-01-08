@@ -25,7 +25,7 @@ impl DefaultMaven {
     /// Execute a Maven build
     pub fn execute(&self, request: MavenExecutionRequest) -> Result<MavenExecutionResult> {
         // Load settings
-        let settings = request.settings.unwrap_or_else(|| Settings::default());
+        let settings = request.settings.unwrap_or_else(Settings::default);
 
         // Determine POM file
         let pom_file = request.pom_file.unwrap_or_else(|| {

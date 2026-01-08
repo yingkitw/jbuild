@@ -45,7 +45,7 @@ fn test_validate_example_project_model() {
     let errors = ModelValidator::validate(&model)
         .expect("Validation should succeed");
     
-    assert!(errors.is_empty(), "Model should be valid, but got errors: {:?}", errors);
+    assert!(errors.is_empty(), "Model should be valid, but got errors: {errors:?}");
 }
 
 #[test]

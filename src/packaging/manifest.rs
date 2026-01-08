@@ -31,7 +31,7 @@ impl Manifest {
     pub fn set_section_attribute(&mut self, section: String, key: String, value: String) {
         self.sections
             .entry(section)
-            .or_insert_with(HashMap::new)
+            .or_default()
             .insert(key, value);
     }
 
@@ -54,24 +54,24 @@ impl Manifest {
     pub fn write_to<W: Write>(&self, writer: &mut W) -> Result<()> {
         // Write main attributes
         for (key, value) in &self.main_attributes {
-            writeln!(writer, "{}: {}", key, value)
+            writeln!(writer, "{key}: {value}")
                 .context("Failed to write manifest attribute")?;
         }
 
         // Write sections
         for (section_name, attributes) in &self.sections {
-            writeln!(writer, "").context("Failed to write manifest newline")?;
-            writeln!(writer, "Name: {}", section_name)
+            writeln!(writer).context("Failed to write manifest newline")?;
+            writeln!(writer, "Name: {section_name}")
                 .context("Failed to write manifest section name")?;
             
             for (key, value) in attributes {
-                writeln!(writer, "{}: {}", key, value)
+                writeln!(writer, "{key}: {value}")
                     .context("Failed to write manifest section attribute")?;
             }
         }
 
         // Manifest must end with newline
-        writeln!(writer, "").context("Failed to write manifest final newline")?;
+        writeln!(writer).context("Failed to write manifest final newline")?;
 
         Ok(())
     }

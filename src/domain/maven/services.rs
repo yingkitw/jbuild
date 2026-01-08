@@ -111,7 +111,7 @@ impl LifecycleExecutor {
     fn parse_plugin_goal(&self, goal: &str) -> Result<super::super::artifact::value_objects::ArtifactCoordinates> {
         let parts: Vec<&str> = goal.split(':').collect();
         if parts.len() < 2 {
-            return Err(anyhow!("Invalid goal format: {}", goal));
+            return Err(anyhow!("Invalid goal format: {goal}"));
         }
         
         // For built-in plugins, use default group

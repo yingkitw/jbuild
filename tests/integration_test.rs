@@ -2,8 +2,7 @@
 
 use jbuild::checkstyle::api::ast::DetailAst;
 use jbuild::checkstyle::api::check::Check;
-use jbuild::checkstyle::api::config::{Configurable, Context, Contextualizable};
-use jbuild::checkstyle::api::error::CheckstyleResult;
+use jbuild::checkstyle::api::config::{Context, Contextualizable};
 use jbuild::checkstyle::api::file::{FileContents, FileText};
 use jbuild::checkstyle::checks::empty_catch_block::EmptyCatchBlockCheck;
 use jbuild::checkstyle::checks::empty_statement::EmptyStatementCheck;

@@ -282,13 +282,11 @@ mod tests {
 
     #[test]
     fn test_version_ordering() {
-        let mut versions = vec![
-            Version::new("2.0.0"),
+        let mut versions = [Version::new("2.0.0"),
             Version::new("1.0.0-SNAPSHOT"),
             Version::new("1.0.0"),
             Version::new("1.5.0"),
-            Version::new("1.0.1"),
-        ];
+            Version::new("1.0.1")];
 
         versions.sort();
 

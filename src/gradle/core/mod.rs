@@ -17,6 +17,12 @@ pub use dependency_resolver::resolve_dependency;
 /// Gradle executor implementation
 pub struct GradleExecutor;
 
+impl Default for GradleExecutor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl GradleExecutor {
     pub fn new() -> Self {
         Self
@@ -30,7 +36,7 @@ impl GradleExecutor {
     /// Execute a task
     fn execute_task(&self, project: &GradleProject, task_name: &str) -> Result<()> {
         let task = project.find_task(task_name)
-            .ok_or_else(|| anyhow::anyhow!("Task not found: {}", task_name))?;
+            .ok_or_else(|| anyhow::anyhow!("Task not found: {task_name}"))?;
 
         // Execute task dependencies first
         for dep_name in &task.depends_on {
@@ -89,13 +95,13 @@ impl BuildExecutor for GradleExecutor {
                     tracing::info!("Successfully executed task: {}", goal);
                 }
                 Err(e) => {
-                    let error_msg = format!("Failed to execute task '{}': {}", goal, e);
+                    let error_msg = format!("Failed to execute task '{goal}': {e}");
                     errors.push(error_msg.clone());
                     tracing::error!("{}", error_msg);
                     success = false;
                     
                     if request.show_errors {
-                        eprintln!("[ERROR] {}", error_msg);
+                        eprintln!("[ERROR] {error_msg}");
                     }
                 }
             }

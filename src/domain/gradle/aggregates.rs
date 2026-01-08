@@ -5,7 +5,7 @@
 //   Contains: Tasks, Configurations, SourceSets, Plugins
 //   Invariants: Valid task graph (no cycles), valid configurations
 
-use crate::domain::artifact::value_objects::{ArtifactCoordinates, Scope};
+use crate::domain::artifact::value_objects::ArtifactCoordinates;
 use crate::domain::shared::value_objects::{FilePath, JavaVersion, Version};
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
@@ -116,7 +116,7 @@ impl GradleProject {
     pub fn apply_plugin(&mut self, plugin_id: String) -> Result<()> {
         // Invariant: No duplicate plugins
         if self.plugins.contains(&plugin_id) {
-            return Err(anyhow!("Plugin {} already applied", plugin_id));
+            return Err(anyhow!("Plugin {plugin_id} already applied"));
         }
         
         self.plugins.push(plugin_id);
@@ -127,7 +127,7 @@ impl GradleProject {
     pub fn add_dependency(&mut self, configuration: &str, dependency: GradleDependency) -> Result<()> {
         let config = self.configurations
             .get_mut(configuration)
-            .ok_or_else(|| anyhow!("Configuration {} not found", configuration))?;
+            .ok_or_else(|| anyhow!("Configuration {configuration} not found"))?;
         
         config.add_dependency(dependency)?;
         Ok(())
@@ -137,7 +137,7 @@ impl GradleProject {
     pub fn create_configuration(&mut self, name: String) -> Result<()> {
         // Invariant: No duplicate configurations
         if self.configurations.contains_key(&name) {
-            return Err(anyhow!("Configuration {} already exists", name));
+            return Err(anyhow!("Configuration {name} already exists"));
         }
         
         self.configurations.insert(name.clone(), Configuration::new(name));
@@ -150,7 +150,7 @@ impl GradleProject {
         
         // Invariant: No duplicate tasks
         if self.tasks.contains_key(&task_name) {
-            return Err(anyhow!("Task {} already exists", task_name));
+            return Err(anyhow!("Task {task_name} already exists"));
         }
         
         self.tasks.insert(task_name, task);
@@ -161,12 +161,12 @@ impl GradleProject {
     pub fn add_task_dependency(&mut self, task_name: &str, depends_on: String) -> Result<()> {
         // Invariant: Dependency task must exist
         if !self.tasks.contains_key(&depends_on) {
-            return Err(anyhow!("Dependency task {} not found", depends_on));
+            return Err(anyhow!("Dependency task {depends_on} not found"));
         }
         
         let task = self.tasks
             .get_mut(task_name)
-            .ok_or_else(|| anyhow!("Task {} not found", task_name))?;
+            .ok_or_else(|| anyhow!("Task {task_name} not found"))?;
         
         task.add_dependency(depends_on)?;
         Ok(())
@@ -179,7 +179,7 @@ impl GradleProject {
             let mut stack = HashSet::new();
             
             if self.has_cycle(task_name, &mut visited, &mut stack)? {
-                return Err(anyhow!("Circular task dependency detected involving {}", task_name));
+                return Err(anyhow!("Circular task dependency detected involving {task_name}"));
             }
         }
         
@@ -214,7 +214,7 @@ impl GradleProject {
     pub fn add_subproject(&mut self, name: String) -> Result<()> {
         // Invariant: No duplicate subprojects
         if self.subprojects.contains(&name) {
-            return Err(anyhow!("Subproject {} already exists", name));
+            return Err(anyhow!("Subproject {name} already exists"));
         }
         
         self.subprojects.push(name);
@@ -417,7 +417,7 @@ impl GradleTask {
     pub fn add_dependency(&mut self, task_name: String) -> Result<()> {
         // Invariant: No duplicate dependencies
         if self.dependencies.contains(&task_name) {
-            return Err(anyhow!("Task dependency {} already exists", task_name));
+            return Err(anyhow!("Task dependency {task_name} already exists"));
         }
         
         self.dependencies.push(task_name);

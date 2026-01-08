@@ -29,11 +29,11 @@ impl DependencyGraph {
     pub fn add_dependency(&mut self, from: String, to: String) {
         self.dependencies
             .entry(from.clone())
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(to.clone());
         self.dependents
             .entry(to)
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(from);
     }
 

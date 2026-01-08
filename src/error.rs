@@ -71,7 +71,7 @@ impl From<serde_json::Error> for MavenError {
 
 impl From<url::ParseError> for MavenError {
     fn from(err: url::ParseError) -> Self {
-        MavenError::InvalidConfiguration(format!("Invalid URL: {}", err))
+        MavenError::InvalidConfiguration(format!("Invalid URL: {err}"))
     }
 }
 

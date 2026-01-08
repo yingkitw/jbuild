@@ -13,7 +13,7 @@ use crate::build::ExecutionResult;
 pub fn load_settings(base_dir: &PathBuf) -> Result<Option<GradleSettings>> {
     if let Some(settings_file) = find_settings_file(base_dir) {
         let settings = parse_settings_file(&settings_file, base_dir)
-            .with_context(|| format!("Failed to parse settings file: {:?}", settings_file))?;
+            .with_context(|| format!("Failed to parse settings file: {settings_file:?}"))?;
         Ok(Some(settings))
     } else {
         Ok(None)
@@ -30,11 +30,11 @@ pub fn load_project(base_dir: &PathBuf) -> Result<GradleProject> {
     } else if build_file_kts.exists() {
         build_file_kts
     } else {
-        return Err(anyhow::anyhow!("No build.gradle or build.gradle.kts found in {:?}", base_dir));
+        return Err(anyhow::anyhow!("No build.gradle or build.gradle.kts found in {base_dir:?}"));
     };
 
     parse_gradle_build_script(&build_file, base_dir)
-        .with_context(|| format!("Failed to parse Gradle build script: {:?}", build_file))
+        .with_context(|| format!("Failed to parse Gradle build script: {build_file:?}"))
 }
 
 /// Load all projects in a multi-project build

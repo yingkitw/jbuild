@@ -260,9 +260,9 @@ impl ProjectDependenciesResolver {
     ) -> Option<PathBuf> {
         let group_path = group_id.replace('.', "/");
         let filename = if let Some(classifier) = classifier {
-            format!("{}-{}-{}.{}", artifact_id, version, classifier, artifact_type)
+            format!("{artifact_id}-{version}-{classifier}.{artifact_type}")
         } else {
-            format!("{}-{}.{}", artifact_id, version, artifact_type)
+            format!("{artifact_id}-{version}.{artifact_type}")
         };
 
         let path = self.local_repository

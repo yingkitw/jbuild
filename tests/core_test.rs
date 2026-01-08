@@ -1,7 +1,6 @@
 //! Unit tests for core components
 
 use jbuild::checkstyle::api::config::Configuration;
-use jbuild::checkstyle::api::error::CheckstyleResult;
 use jbuild::checkstyle::api::file::FileText;
 use jbuild::checkstyle::runner::module_factory::{DefaultModuleFactory, ModuleFactory};
 use jbuild::checkstyle::runner::{Checker, ConfigurationLoader, DefaultLogger};

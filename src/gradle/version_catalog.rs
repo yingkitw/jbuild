@@ -290,7 +290,7 @@ pub fn find_version_catalog(project_dir: &Path) -> Result<Option<VersionCatalog>
     
     if catalog_path.exists() {
         let content = std::fs::read_to_string(&catalog_path)
-            .with_context(|| format!("Failed to read version catalog: {:?}", catalog_path))?;
+            .with_context(|| format!("Failed to read version catalog: {catalog_path:?}"))?;
         let catalog = parse_version_catalog(&content, "libs")?;
         Ok(Some(catalog))
     } else {

@@ -29,7 +29,7 @@ impl AdvancedDependencyResolver {
 
     /// Add an exclusion pattern
     pub fn add_exclusion(mut self, group_id: &str, artifact_id: &str) -> Self {
-        self.exclusions.insert(format!("{}:{}", group_id, artifact_id));
+        self.exclusions.insert(format!("{group_id}:{artifact_id}"));
         self
     }
 

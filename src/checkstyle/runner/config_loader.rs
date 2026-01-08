@@ -70,8 +70,7 @@ impl ConfigurationLoader {
                 Ok(Event::Eof) => break,
                 Err(e) => {
                     return Err(CheckstyleError::Configuration(format!(
-                        "XML parsing error: {}",
-                        e
+                        "XML parsing error: {e}"
                     )));
                 }
                 _ => {}

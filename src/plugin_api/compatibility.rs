@@ -59,7 +59,7 @@ impl PluginCompatibility {
             // Merge dependencies
             if merged.dependencies.is_none() && parent.dependencies.is_some() {
                 merged.dependencies = parent.dependencies.clone();
-            } else if let (Some(ref mut child_deps), Some(ref parent_deps)) = 
+            } else if let (Some(ref mut child_deps), Some(parent_deps)) = 
                 (merged.dependencies.as_mut(), parent.dependencies.as_ref()) {
                 // Merge dependency lists (child first)
                 let mut all_deps = child_deps.clone();
@@ -77,7 +77,7 @@ impl PluginCompatibility {
             // Merge executions
             if merged.executions.is_none() && parent.executions.is_some() {
                 merged.executions = parent.executions.clone();
-            } else if let (Some(ref mut child_execs), Some(ref parent_execs)) = 
+            } else if let (Some(ref mut child_execs), Some(parent_execs)) = 
                 (merged.executions.as_mut(), parent.executions.as_ref()) {
                 // Merge executions (child first)
                 let mut all_execs = child_execs.clone();

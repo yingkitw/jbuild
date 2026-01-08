@@ -17,7 +17,7 @@ impl BuildOrchestrationService {
     /// Execute a build for a project
     pub fn execute_build(project_dir: &Path, goals: Vec<String>) -> Result<BuildResult> {
         let build_system = BuildSystemDetector::get_build_type(project_dir)
-            .ok_or_else(|| anyhow!("No build system detected in {:?}", project_dir))?;
+            .ok_or_else(|| anyhow!("No build system detected in {project_dir:?}"))?;
         
         match build_system {
             crate::domain::build_system::value_objects::BuildSystemType::Maven => {
@@ -43,11 +43,11 @@ impl BuildOrchestrationService {
             // Try to parse as lifecycle phase
             if let Some(phase) = crate::domain::maven::value_objects::LifecyclePhase::from_str(&goal) {
                 let plan = executor.execute_phase(&project, phase)?;
-                steps.push(format!("Executed phase: {}", goal));
+                steps.push(format!("Executed phase: {goal}"));
                 steps.extend(plan.steps().iter().map(|s| format!("  - {}", s.goal)));
             } else {
                 executor.execute_goal(&project, &goal)?;
-                steps.push(format!("Executed goal: {}", goal));
+                steps.push(format!("Executed goal: {goal}"));
             }
         }
         
@@ -70,7 +70,7 @@ impl BuildOrchestrationService {
         
         for task_name in tasks {
             let plan = TaskExecutor::execute_task(&project, &task_name)?;
-            steps.push(format!("Executed task: {}", task_name));
+            steps.push(format!("Executed task: {task_name}"));
             steps.extend(plan.tasks().iter().map(|t| format!("  - {}", t.name())));
         }
         
@@ -85,7 +85,7 @@ impl BuildOrchestrationService {
         Ok(BuildResult {
             success: true,
             build_system: "JBuild".to_string(),
-            steps: goals.iter().map(|g| format!("Executed: {}", g)).collect(),
+            steps: goals.iter().map(|g| format!("Executed: {g}")).collect(),
         })
     }
     

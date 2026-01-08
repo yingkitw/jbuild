@@ -136,7 +136,7 @@ mod tests {
         let builder = ClasspathBuilder::new()
             .add_entry(PathBuf::from("/path/to/classes"));
         
-        let display = format!("{}", builder);
+        let display = format!("{builder}");
         assert!(!display.is_empty());
     }
 

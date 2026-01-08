@@ -176,14 +176,14 @@ fn test_wrapper_version_parsing_formats() {
         fs::write(temp_dir.path().join("mvnw"), "#!/bin/bash").unwrap();
         fs::create_dir_all(temp_dir.path().join(".mvn/wrapper")).unwrap();
 
-        let properties = format!("distributionUrl={}", url);
+        let properties = format!("distributionUrl={url}");
         fs::write(
             temp_dir.path().join(".mvn/wrapper/maven-wrapper.properties"),
             properties,
         ).unwrap();
 
         let wrapper = BuildWrapper::detect(temp_dir.path()).unwrap();
-        assert_eq!(wrapper.get_version(), expected_version, "Failed for URL: {}", url);
+        assert_eq!(wrapper.get_version(), expected_version, "Failed for URL: {url}");
     }
 }
 

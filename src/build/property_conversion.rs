@@ -115,7 +115,7 @@ pub fn interpolate_maven_properties(text: &str, properties: &HashMap<String, Str
     let mut result = text.to_string();
     
     for (key, value) in properties {
-        let pattern = format!("${{{}}}", key);
+        let pattern = format!("${{{key}}}");
         result = result.replace(&pattern, value);
     }
     
@@ -128,12 +128,12 @@ pub fn interpolate_gradle_properties(text: &str, properties: &HashMap<String, St
     
     for (key, value) in properties {
         // ${property} format
-        let pattern1 = format!("${{{}}}", key);
+        let pattern1 = format!("${{{key}}}");
         result = result.replace(&pattern1, value);
         
         // $property format (only for simple identifiers)
         if key.chars().all(|c| c.is_alphanumeric() || c == '_') {
-            let pattern2 = format!("${}", key);
+            let pattern2 = format!("${key}");
             // Be careful not to replace partial matches
             result = result.replace(&pattern2, value);
         }

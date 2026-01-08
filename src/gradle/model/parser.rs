@@ -12,7 +12,7 @@ pub fn parse_gradle_build_script(
     base_dir: &Path,
 ) -> Result<GradleProject> {
     let content = std::fs::read_to_string(build_file)
-        .with_context(|| format!("Failed to read build file: {:?}", build_file))?;
+        .with_context(|| format!("Failed to read build file: {build_file:?}"))?;
 
     // Determine if it's Kotlin DSL or Groovy DSL
     let is_kotlin = build_file.extension()
@@ -139,7 +139,7 @@ fn parse_kotlin_dsl(
 /// Extract a block from the build script
 fn extract_block(content: &str, block_name: &str) -> Option<String> {
     // Look for "block_name {" pattern
-    let pattern = format!("{} {{", block_name);
+    let pattern = format!("{block_name} {{");
     if let Some(start) = content.find(&pattern) {
         let start_pos = start + pattern.len();
         let mut depth = 1;
@@ -266,7 +266,7 @@ fn parse_dependencies(deps_block: &str) -> Vec<Dependency> {
     
     for line in deps_block.lines() {
         for config in &dependency_patterns {
-            let pattern = format!("{} ", config);
+            let pattern = format!("{config} ");
             if let Some(start) = line.find(&pattern) {
                 let dep_start = start + pattern.len();
                 let dep_str = line[dep_start..].trim();
@@ -323,7 +323,7 @@ fn parse_tasks(content: &str) -> Vec<Task> {
         
         // Find task name (until space, '(', or '{')
         let name_end = remaining
-            .find(|c: char| c == ' ' || c == '(' || c == '{')
+            .find([' ', '(', '{'])
             .unwrap_or(remaining.len());
         
         let task_name = remaining[..name_end].trim().to_string();
@@ -401,7 +401,7 @@ dependencies {
         assert_eq!(project.plugins[0].id, "java");
         assert_eq!(project.group, Some("com.example".to_string()));
         assert_eq!(project.version, Some("1.0.0".to_string()));
-        assert!(project.repositories.len() > 0);
+        assert!(!project.repositories.is_empty());
         assert!(project.dependencies.len() >= 2);
     }
 }

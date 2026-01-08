@@ -2,7 +2,7 @@
 //! Coordinates dependency resolution and artifact management
 
 use crate::domain::artifact::services::{DependencyResolver, VersionResolver};
-use crate::domain::artifact::repositories::{ArtifactRepository, RepositoryChain};
+use crate::domain::artifact::repositories::ArtifactRepository;
 use crate::domain::artifact::value_objects::{ArtifactCoordinates, Scope};
 use crate::domain::shared::value_objects::Version;
 use anyhow::Result;

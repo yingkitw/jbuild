@@ -270,7 +270,7 @@ impl TaskRegistry {
     /// Execute a task by name
     pub fn execute(&self, name: &str, base_dir: &PathBuf) -> Result<()> {
         let task = self.tasks.get(name)
-            .ok_or_else(|| anyhow::anyhow!("Task not found: {}", name))?;
+            .ok_or_else(|| anyhow::anyhow!("Task not found: {name}"))?;
         task.execute(base_dir)
     }
 }

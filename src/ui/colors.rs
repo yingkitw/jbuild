@@ -16,34 +16,34 @@ pub fn info(msg: &str) {
     if should_colorize() {
         println!("{}", msg.green().bold());
     } else {
-        println!("[INFO] {}", msg);
+        println!("[INFO] {msg}");
     }
 }
 
 /// Print a success message (green)
 pub fn success(msg: &str) {
     if should_colorize() {
-        println!("{}", format!("✓ {}", msg).green().bold());
+        println!("{}", format!("✓ {msg}").green().bold());
     } else {
-        println!("[SUCCESS] {}", msg);
+        println!("[SUCCESS] {msg}");
     }
 }
 
 /// Print an error message (red)
 pub fn error(msg: &str) {
     if should_colorize() {
-        eprintln!("{}", format!("✗ {}", msg).red().bold());
+        eprintln!("{}", format!("✗ {msg}").red().bold());
     } else {
-        eprintln!("[ERROR] {}", msg);
+        eprintln!("[ERROR] {msg}");
     }
 }
 
 /// Print a warning message (yellow)
 pub fn warn(msg: &str) {
     if should_colorize() {
-        println!("{}", format!("⚠ {}", msg).yellow().bold());
+        println!("{}", format!("⚠ {msg}").yellow().bold());
     } else {
-        println!("[WARN] {}", msg);
+        println!("[WARN] {msg}");
     }
 }
 
@@ -74,7 +74,7 @@ pub fn dependency_info(group: &str, artifact: &str, version: &str) {
             version.yellow()
         );
     } else {
-        println!("  {}:{}:{}", group, artifact, version);
+        println!("  {group}:{artifact}:{version}");
     }
 }
 

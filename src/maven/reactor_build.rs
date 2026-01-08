@@ -55,7 +55,7 @@ impl ReactorProject {
         let group_id = group_id.into();
         let artifact_id = artifact_id.into();
         Self {
-            id: format!("{}:{}", group_id, artifact_id),
+            id: format!("{group_id}:{artifact_id}"),
             group_id,
             artifact_id: artifact_id.clone(),
             version: version.into(),
@@ -160,7 +160,7 @@ impl ReactorBuildStatus {
         result: &mut Vec<&'a ReactorProject>,
     ) -> Result<()> {
         if temp_visited.contains(id) {
-            return Err(anyhow::anyhow!("Circular dependency detected: {}", id));
+            return Err(anyhow::anyhow!("Circular dependency detected: {id}"));
         }
         if visited.contains(id) {
             return Ok(());
@@ -252,11 +252,10 @@ impl ReactorBuildStatus {
         // Find all projects that transitively depend on failed projects
         let mut to_skip = HashSet::new();
         for project in &self.projects {
-            if project.status == ProjectBuildStatus::Pending {
-                if self.depends_on_any(&project.id, &failed_ids) {
+            if project.status == ProjectBuildStatus::Pending
+                && self.depends_on_any(&project.id, &failed_ids) {
                     to_skip.insert(project.id.clone());
                 }
-            }
         }
 
         // Mark them as skipped
@@ -303,7 +302,7 @@ impl ReactorSummary {
         let remaining_seconds = seconds % 60;
         
         if minutes > 0 {
-            format!("{}:{:02} min", minutes, remaining_seconds)
+            format!("{minutes}:{remaining_seconds:02} min")
         } else {
             format!("{}.{:03} s", seconds, self.total_time_ms % 1000)
         }

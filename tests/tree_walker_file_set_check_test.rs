@@ -3,11 +3,8 @@
 use jbuild::checkstyle::api::check::FileSetCheck;
 use jbuild::checkstyle::api::config::{Configurable, Context, Contextualizable};
 use jbuild::checkstyle::api::file::FileText;
-use jbuild::checkstyle::checks::empty_catch_block::EmptyCatchBlockCheck;
 use jbuild::checkstyle::runner::tree_walker_file_set_check::TreeWalkerFileSetCheck;
 use std::path::PathBuf;
-use std::sync::Arc;
-use std::sync::Mutex;
 
 #[test]
 fn test_tree_walker_file_set_check_new() {
@@ -61,7 +58,7 @@ fn test_tree_walker_file_set_check_with_child_check() {
     
     // Add a child check configuration
     let mut config = jbuild::checkstyle::api::config::Configuration::new("TreeWalker".to_string());
-    let mut child_config = jbuild::checkstyle::api::config::Configuration::new("EmptyCatchBlock".to_string());
+    let child_config = jbuild::checkstyle::api::config::Configuration::new("EmptyCatchBlock".to_string());
     config.add_child(child_config);
     
     check.configure(&config).unwrap();

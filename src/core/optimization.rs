@@ -125,7 +125,7 @@ impl ParallelExecutor {
         for handle in handles {
             match handle.await {
                 Ok(result) => results.push(result),
-                Err(e) => results.push(Err(anyhow::anyhow!("Task panicked: {}", e))),
+                Err(e) => results.push(Err(anyhow::anyhow!("Task panicked: {e}"))),
             }
         }
         
@@ -166,8 +166,8 @@ mod tests {
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let source_file = temp_dir.join(format!("test_source_{}.java", test_id));
-        let output_file = temp_dir.join(format!("test_source_{}.class", test_id));
+        let source_file = temp_dir.join(format!("test_source_{test_id}.java"));
+        let output_file = temp_dir.join(format!("test_source_{test_id}.class"));
         
         // Create source file
         std::fs::write(&source_file, "public class Test {}").unwrap();

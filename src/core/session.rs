@@ -34,7 +34,7 @@ impl MavenSession {
         let local_repo = settings
             .local_repository
             .as_ref()
-            .map(|p| PathBuf::from(p))
+            .map(PathBuf::from)
             .unwrap_or_else(|| {
                 let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
                 let mut path = PathBuf::from(home);

@@ -66,7 +66,7 @@ impl Violation {
             // Simple formatting - replace {0}, {1}, etc. with args
             let mut msg = custom.clone();
             for (i, arg) in self.args.iter().enumerate() {
-                msg = msg.replace(&format!("{{{}}}", i), arg);
+                msg = msg.replace(&format!("{{{i}}}"), arg);
             }
             msg
         } else {

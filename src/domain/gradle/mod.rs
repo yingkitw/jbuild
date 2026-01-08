@@ -8,7 +8,5 @@ pub mod value_objects;
 pub mod aggregates;
 pub mod services;
 
-pub use entities::*;
-pub use value_objects::*;
 pub use aggregates::*;
 pub use services::*;

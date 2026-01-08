@@ -136,7 +136,7 @@ fn test_default_logger_add_exception() {
     
     let file = PathBuf::from("Test.java");
     let event = AuditEvent::new(Some(file), None, AuditEventType::AddException);
-    let error = std::io::Error::new(std::io::ErrorKind::Other, "Test error");
+    let error = std::io::Error::other("Test error");
     let result = logger.add_exception(&event, &error);
     assert!(result.is_ok(), "add_exception should succeed");
 }
@@ -168,7 +168,7 @@ fn test_default_logger_all_severity_levels() {
         let file = PathBuf::from("Test.java");
         let event = AuditEvent::new(Some(file), Some(violation), AuditEventType::AddError);
         let result = logger.add_error(&event);
-        assert!(result.is_ok(), "Should handle {:?} severity", severity);
+        assert!(result.is_ok(), "Should handle {severity:?} severity");
     }
 }
 

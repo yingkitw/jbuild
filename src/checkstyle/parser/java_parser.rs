@@ -30,7 +30,7 @@ impl JavaParser {
         let language = tree_sitter_java::language();
         parser
             .set_language(language)
-            .map_err(|e| CheckstyleError::Parse(format!("Failed to set Java language: {}", e)))?;
+            .map_err(|e| CheckstyleError::Parse(format!("Failed to set Java language: {e}")))?;
 
         // Parse the source code
         let tree = parser.parse(text, None).ok_or_else(|| {

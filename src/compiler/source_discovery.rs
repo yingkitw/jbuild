@@ -19,7 +19,7 @@ impl SourceDiscovery {
             .filter_map(|e| e.ok())
         {
             let path = entry.path();
-            if path.is_file() && path.extension().map_or(false, |ext| ext == "java") {
+            if path.is_file() && path.extension().is_some_and(|ext| ext == "java") {
                 sources.push(path.to_path_buf());
             }
         }
@@ -33,7 +33,7 @@ impl SourceDiscovery {
 
         for root in source_roots {
             let sources = Self::discover_java_sources(root)
-                .with_context(|| format!("Failed to discover sources in {:?}", root))?;
+                .with_context(|| format!("Failed to discover sources in {root:?}"))?;
             all_sources.extend(sources);
         }
 

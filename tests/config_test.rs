@@ -208,15 +208,15 @@ fn test_jbuild_config_java_versions() {
 [package]
 name = "java-test"
 version = "1.0.0"
-java = "{}"
-"#, java_version);
+java = "{java_version}"
+"#);
 
         fs::write(&config_path, toml_content).unwrap();
         let config = JbuildConfig::from_file(&config_path).unwrap();
         let pom_xml = config.to_pom_xml();
 
-        assert!(pom_xml.contains(&format!("<maven.compiler.source>{}</maven.compiler.source>", java_version)));
-        assert!(pom_xml.contains(&format!("<maven.compiler.target>{}</maven.compiler.target>", java_version)));
+        assert!(pom_xml.contains(&format!("<maven.compiler.source>{java_version}</maven.compiler.source>")));
+        assert!(pom_xml.contains(&format!("<maven.compiler.target>{java_version}</maven.compiler.target>")));
     }
 }
 

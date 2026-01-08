@@ -84,8 +84,7 @@ impl Configurable for TypeNameCheck {
         if let Some(format_str) = config.get_property("format") {
             if let Err(e) = self.set_format(format_str.clone()) {
                 return Err(crate::checkstyle::api::error::CheckstyleError::Configuration(format!(
-                    "Invalid format pattern: {}",
-                    e
+                    "Invalid format pattern: {e}"
                 )));
             }
         }

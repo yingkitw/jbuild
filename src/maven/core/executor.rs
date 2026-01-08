@@ -10,6 +10,12 @@ pub struct MavenBuildExecutor {
     maven: DefaultMaven,
 }
 
+impl Default for MavenBuildExecutor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MavenBuildExecutor {
     pub fn new() -> Self {
         Self {

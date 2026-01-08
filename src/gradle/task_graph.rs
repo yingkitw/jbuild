@@ -73,7 +73,7 @@ impl TaskGraph {
                 t.dependencies.push(depends_on.to_string());
             }
         } else {
-            return Err(anyhow!("Task not found: {}", task));
+            return Err(anyhow!("Task not found: {task}"));
         }
 
         // Add dependent to the dependency
@@ -99,7 +99,7 @@ impl TaskGraph {
         // Start with requested tasks
         for task in &self.requested_tasks {
             if !self.tasks.contains_key(task) {
-                return Err(anyhow!("Requested task not found: {}", task));
+                return Err(anyhow!("Requested task not found: {task}"));
             }
             queue.push_back(task.clone());
         }
@@ -149,7 +149,7 @@ impl TaskGraph {
         result: &mut Vec<String>,
     ) -> Result<()> {
         if temp_visited.contains(task) {
-            return Err(anyhow!("Circular dependency detected involving task: {}", task));
+            return Err(anyhow!("Circular dependency detected involving task: {task}"));
         }
         if visited.contains(task) {
             return Ok(());

@@ -2,7 +2,7 @@
 
 use jbuild::checkstyle::api::ast::DetailAst;
 use jbuild::checkstyle::api::check::{Check, FileSetCheck};
-use jbuild::checkstyle::api::config::{Configurable, Context, Contextualizable};
+use jbuild::checkstyle::api::config::{Context, Contextualizable};
 use jbuild::checkstyle::api::file::{FileContents, FileText};
 use jbuild::checkstyle::checks::empty_catch_block::EmptyCatchBlockCheck;
 use jbuild::checkstyle::checks::empty_statement::EmptyStatementCheck;
@@ -10,16 +10,13 @@ use jbuild::checkstyle::checks::line_length::LineLengthCheck;
 use jbuild::checkstyle::checks::missing_switch_default::MissingSwitchDefaultCheck;
 use jbuild::checkstyle::checks::multiple_variable_declarations::MultipleVariableDeclarationsCheck;
 use jbuild::checkstyle::checks::package_name::PackageNameCheck;
-use jbuild::checkstyle::checks::redundant_import::RedundantImportCheck;
 use jbuild::checkstyle::checks::type_name::TypeNameCheck;
-use jbuild::checkstyle::runner::checker::Checker;
-use jbuild::checkstyle::runner::config_loader::ConfigurationLoader;
 use std::path::PathBuf;
 
 fn read_example_file(filename: &str) -> String {
-    let path = PathBuf::from(format!("examples/checkstyle-examples/{}", filename));
+    let path = PathBuf::from(format!("examples/checkstyle-examples/{filename}"));
     std::fs::read_to_string(&path)
-        .unwrap_or_else(|_| panic!("Failed to read example file: {}", filename))
+        .unwrap_or_else(|_| panic!("Failed to read example file: {filename}"))
 }
 
 fn create_context() -> Context {
@@ -223,7 +220,7 @@ fn test_complex_switch_example() {
     println!("ComplexSwitchExample: Found {} violations", violations.len());
     // Should find violations for switches without default cases
     // Switches with default (method3, method4) should not trigger violations
-    assert!(violations.len() > 0, "Should find switch violations");
+    assert!(!violations.is_empty(), "Should find switch violations");
 }
 
 #[test]
@@ -274,7 +271,7 @@ fn test_all_checks_on_valid_code() {
         package_check.visit_token(package_ast.as_ref() as &dyn DetailAst).unwrap();
     }
     let package_violations = package_check.get_violations().len();
-    println!("ValidCodeExample - PackageName: {} violations", package_violations);
+    println!("ValidCodeExample - PackageName: {package_violations} violations");
     assert_eq!(package_violations, 0);
     
     // TypeName check
@@ -285,7 +282,7 @@ fn test_all_checks_on_valid_code() {
         type_check.visit_token(class_ast.as_ref() as &dyn DetailAst).unwrap();
     }
     let type_violations = type_check.get_violations().len();
-    println!("ValidCodeExample - TypeName: {} violations", type_violations);
+    println!("ValidCodeExample - TypeName: {type_violations} violations");
     assert_eq!(type_violations, 0);
     
     // MissingSwitchDefault check
@@ -297,7 +294,7 @@ fn test_all_checks_on_valid_code() {
         switch_check.visit_token(switch_ast.as_ref() as &dyn DetailAst).unwrap();
     }
     let switch_violations = switch_check.get_violations().len();
-    println!("ValidCodeExample - MissingSwitchDefault: {} violations", switch_violations);
+    println!("ValidCodeExample - MissingSwitchDefault: {switch_violations} violations");
     assert_eq!(switch_violations, 0);
     
     // EmptyCatchBlock check
@@ -309,7 +306,7 @@ fn test_all_checks_on_valid_code() {
         catch_check.visit_token(catch_ast.as_ref() as &dyn DetailAst).unwrap();
     }
     let catch_violations = catch_check.get_violations().len();
-    println!("ValidCodeExample - EmptyCatchBlock: {} violations", catch_violations);
+    println!("ValidCodeExample - EmptyCatchBlock: {catch_violations} violations");
     assert_eq!(catch_violations, 0);
     
     // EmptyStatement check
@@ -321,7 +318,7 @@ fn test_all_checks_on_valid_code() {
         empty_stat_check.visit_token(empty_stat_ast.as_ref() as &dyn DetailAst).unwrap();
     }
     let empty_stat_violations = empty_stat_check.get_violations().len();
-    println!("ValidCodeExample - EmptyStatement: {} violations", empty_stat_violations);
+    println!("ValidCodeExample - EmptyStatement: {empty_stat_violations} violations");
     assert_eq!(empty_stat_violations, 0);
     
     // MultipleVariableDeclarations check
@@ -336,7 +333,7 @@ fn test_all_checks_on_valid_code() {
         var_decl_check.visit_token(for_init_ast.as_ref() as &dyn DetailAst).unwrap();
     }
     let var_decl_violations = var_decl_check.get_violations().len();
-    println!("ValidCodeExample - MultipleVariableDeclarations: {} violations", var_decl_violations);
+    println!("ValidCodeExample - MultipleVariableDeclarations: {var_decl_violations} violations");
     assert_eq!(var_decl_violations, 0);
 }
 
@@ -366,8 +363,8 @@ fn test_integration_all_examples() {
         let file_contents = FileContents::new(file_text.clone());
         
         let ast_result = jbuild::checkstyle::parser::java_parser::JavaParser::parse(&file_contents);
-        assert!(ast_result.is_ok(), "Should parse {} successfully", example_file);
+        assert!(ast_result.is_ok(), "Should parse {example_file} successfully");
         
-        println!("✓ {} parsed successfully and can be checked with {}", example_file, check_name);
+        println!("✓ {example_file} parsed successfully and can be checked with {check_name}");
     }
 }

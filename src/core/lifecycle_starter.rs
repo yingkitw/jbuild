@@ -31,7 +31,7 @@ impl LifecycleStarter {
         if let Some(project) = &session.current_project {
             // Parse goals to determine target phase
             let target_phase = self.goal_parser.get_target_phase(goals)
-                .unwrap_or_else(|| {
+                .unwrap_or({
                     // Default to compile if no phase found
                     LifecyclePhase::Compile
                 });

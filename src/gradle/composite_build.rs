@@ -106,7 +106,7 @@ impl CompositeBuild {
 
     /// Resolve a dependency, checking for substitutions
     pub fn resolve_dependency(&self, group: &str, name: &str) -> Option<String> {
-        let module = format!("{}:{}", group, name);
+        let module = format!("{group}:{name}");
 
         // Check global substitutions first
         if let Some(substitution) = self.global_substitutions.get(&module) {

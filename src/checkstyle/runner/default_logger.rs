@@ -90,7 +90,7 @@ impl AuditListener for DefaultLogger {
                     violation.get_message(),
                     violation.module_id
                 )
-                .map_err(|e| CheckstyleError::Io(e))?;
+                .map_err(CheckstyleError::Io)?;
             } else {
                 writeln!(
                     output,
@@ -101,7 +101,7 @@ impl AuditListener for DefaultLogger {
                     violation.get_message(),
                     violation.module_id
                 )
-                .map_err(|e| CheckstyleError::Io(e))?;
+                .map_err(CheckstyleError::Io)?;
             }
         }
         Ok(())
@@ -121,10 +121,9 @@ impl AuditListener for DefaultLogger {
         let mut output = self.output.lock().unwrap();
         writeln!(
             output,
-            "[ERROR] {}: Exception occurred: {}",
-            file_name, error
+            "[ERROR] {file_name}: Exception occurred: {error}"
         )
-        .map_err(|e| CheckstyleError::Io(e))?;
+        .map_err(CheckstyleError::Io)?;
         Ok(())
     }
 }

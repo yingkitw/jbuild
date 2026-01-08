@@ -3,7 +3,7 @@
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 use std::fmt;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 /// Artifact coordinates (GAV) value object
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -65,7 +65,7 @@ impl ArtifactCoordinates {
     pub fn from_gav(gav: &str) -> Result<Self> {
         let parts: Vec<&str> = gav.split(':').collect();
         if parts.len() < 3 {
-            return Err(anyhow!("Invalid GAV format: {}", gav));
+            return Err(anyhow!("Invalid GAV format: {gav}"));
         }
 
         let mut coords = Self::new(parts[0], parts[1], parts[2])?;
@@ -181,7 +181,9 @@ impl fmt::Display for ArtifactCoordinates {
 
 /// Dependency scope value object
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Default)]
 pub enum Scope {
+    #[default]
     Compile,
     Provided,
     Runtime,
@@ -215,11 +217,6 @@ impl Scope {
     }
 }
 
-impl Default for Scope {
-    fn default() -> Self {
-        Scope::Compile
-    }
-}
 
 /// Version range value object
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

@@ -83,7 +83,7 @@ impl LocalRepository {
     /// Parse POM file for metadata
     fn parse_pom(&self, pom_path: &PathBuf) -> Result<ArtifactMetadata> {
         if !pom_path.exists() {
-            return Err(anyhow!("POM file not found: {:?}", pom_path));
+            return Err(anyhow!("POM file not found: {pom_path:?}"));
         }
         
         let content = fs::read_to_string(pom_path)?;
@@ -156,9 +156,9 @@ impl ArtifactRepository for LocalRepository {
     fn download(&self, coordinates: &ArtifactCoordinates) -> Result<Vec<u8>> {
         let path = self.artifact_path(coordinates);
         if !path.exists() {
-            return Err(anyhow!("Artifact not found: {:?}", path));
+            return Err(anyhow!("Artifact not found: {path:?}"));
         }
-        fs::read(&path).map_err(|e| anyhow!("Failed to read artifact: {}", e))
+        fs::read(&path).map_err(|e| anyhow!("Failed to read artifact: {e}"))
     }
 }
 
@@ -230,7 +230,7 @@ impl ArtifactRepository for RemoteRepository {
     fn download(&self, coordinates: &ArtifactCoordinates) -> Result<Vec<u8>> {
         let cached = self.cache_path(coordinates);
         if cached.exists() {
-            return fs::read(&cached).map_err(|e| anyhow!("Failed to read cached artifact: {}", e));
+            return fs::read(&cached).map_err(|e| anyhow!("Failed to read cached artifact: {e}"));
         }
         
         Err(anyhow!("Remote download not yet implemented"))

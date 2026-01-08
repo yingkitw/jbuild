@@ -39,7 +39,7 @@ impl TestDiscovery {
         {
             let path = entry.path();
             
-            if path.is_file() && path.extension().map_or(false, |ext| ext == "class") {
+            if path.is_file() && path.extension().is_some_and(|ext| ext == "class") {
                 // Try to determine if it's a test class
                 // For now, we'll use simple heuristics (class name ends with Test)
                 if let Some(file_name) = path.file_stem() {
@@ -71,8 +71,7 @@ impl TestDiscovery {
         
         let class_name = relative
             .to_string_lossy()
-            .replace('/', ".")
-            .replace('\\', ".")
+            .replace(['/', '\\'], ".")
             .strip_suffix(".class")
             .ok_or_else(|| anyhow::anyhow!("Not a .class file"))?
             .to_string();

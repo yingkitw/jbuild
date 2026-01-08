@@ -71,7 +71,7 @@ impl TestRunner {
                         class_name: test_class.class_name.clone(),
                         success: false,
                         output: String::new(),
-                        error_output: format!("Test execution failed: {}", e),
+                        error_output: format!("Test execution failed: {e}"),
                         tests_run: 0,
                         tests_passed: 0,
                         tests_failed: 1,

@@ -36,14 +36,14 @@ impl RemoteRepository {
     /// Get the URL for maven-metadata.xml for a groupId/artifactId
     pub fn metadata_url(&self, group_id: &str, artifact_id: &str) -> Url {
         let group_path = group_id.replace('.', "/");
-        let path = format!("{}/{}/maven-metadata.xml", group_path, artifact_id);
+        let path = format!("{group_path}/{artifact_id}/maven-metadata.xml");
         self.url.join(&path).unwrap_or_else(|_| self.url.clone())
     }
 
     /// Get the URL for maven-metadata.xml for a specific version (for snapshots)
     pub fn version_metadata_url(&self, group_id: &str, artifact_id: &str, version: &str) -> Url {
         let group_path = group_id.replace('.', "/");
-        let path = format!("{}/{}/{}/maven-metadata.xml", group_path, artifact_id, version);
+        let path = format!("{group_path}/{artifact_id}/{version}/maven-metadata.xml");
         self.url.join(&path).unwrap_or_else(|_| self.url.clone())
     }
 }

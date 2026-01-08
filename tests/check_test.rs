@@ -3,7 +3,7 @@
 use jbuild::checkstyle::api::ast::DetailAst;
 use jbuild::checkstyle::api::check::{Check, FileSetCheck};
 use jbuild::checkstyle::api::config::{Configurable, Context, Contextualizable};
-use jbuild::checkstyle::api::file::{FileContents, FileText};
+use jbuild::checkstyle::api::file::FileText;
 use jbuild::checkstyle::checks::empty_catch_block::EmptyCatchBlockCheck;
 use jbuild::checkstyle::checks::empty_statement::EmptyStatementCheck;
 use jbuild::checkstyle::checks::line_length::LineLengthCheck;
@@ -140,7 +140,7 @@ fn test_line_length_check_process() {
         .process(&PathBuf::from("test.java"), &file_text)
         .unwrap();
     // Should find violation for line exceeding default max (80)
-    assert!(violations.len() > 0, "Should find violations for long line");
+    assert!(!violations.is_empty(), "Should find violations for long line");
 }
 
 #[test]

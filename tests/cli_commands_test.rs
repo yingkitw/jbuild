@@ -58,11 +58,11 @@ mod new_command {
     fn test_package_name_generation() {
         // Package names should be lowercase with underscores
         let name = "my-app";
-        let package_name = name.replace('-', "_").replace('.', "_").to_lowercase();
+        let package_name = name.replace(['-', '.'], "_").to_lowercase();
         assert_eq!(package_name, "my_app");
 
         let name2 = "Hello.World-App";
-        let package_name2 = name2.replace('-', "_").replace('.', "_").to_lowercase();
+        let package_name2 = name2.replace(['-', '.'], "_").to_lowercase();
         assert_eq!(package_name2, "hello_world_app");
     }
 
@@ -112,10 +112,9 @@ mod new_command {
 <project xmlns="http://maven.apache.org/POM/4.0.0">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.example</groupId>
-    <artifactId>{}</artifactId>
+    <artifactId>{name}</artifactId>
     <version>1.0.0-SNAPSHOT</version>
-</project>"#,
-            name
+</project>"#
         );
 
         assert!(pom_xml.contains("<artifactId>my-app</artifactId>"));
@@ -134,9 +133,8 @@ mod new_command {
 }}
 
 application {{
-    mainClass = 'com.example.{}.{}'
-}}"#,
-            package_name, class_name
+    mainClass = 'com.example.{package_name}.{class_name}'
+}}"#
         );
 
         assert!(build_gradle.contains("id 'java'"));
@@ -149,14 +147,13 @@ application {{
         let package_name = "my_app";
         let class_name = "MyApp";
         let main_java = format!(
-            r#"package com.example.{};
+            r#"package com.example.{package_name};
 
-public class {} {{
+public class {class_name} {{
     public static void main(String[] args) {{
         System.out.println("Hello!");
     }}
-}}"#,
-            package_name, class_name
+}}"#
         );
 
         assert!(main_java.contains("package com.example.my_app;"));
@@ -169,14 +166,13 @@ public class {} {{
         let package_name = "my_lib";
         let class_name = "MyLib";
         let lib_java = format!(
-            r#"package com.example.{};
+            r#"package com.example.{package_name};
 
-public class {} {{
+public class {class_name} {{
     public String greet(String name) {{
         return "Hello, " + name + "!";
     }}
-}}"#,
-            package_name, class_name
+}}"#
         );
 
         assert!(lib_java.contains("package com.example.my_lib;"));
@@ -189,18 +185,17 @@ public class {} {{
         let package_name = "my_app";
         let class_name = "MyApp";
         let test_java = format!(
-            r#"package com.example.{};
+            r#"package com.example.{package_name};
 
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class {}Test {{
+public class {class_name}Test {{
     @Test
     void testExample() {{
         assertTrue(true);
     }}
-}}"#,
-            package_name, class_name
+}}"#
         );
 
         assert!(test_java.contains("package com.example.my_app;"));
@@ -231,7 +226,7 @@ out/
     fn test_generate_readme() {
         let name = "my-app";
         let readme = format!(
-            r#"# {}
+            r#"# {name}
 
 A Java project created with jbuild.
 
@@ -240,8 +235,7 @@ A Java project created with jbuild.
 ```bash
 jbuild build
 ```
-"#,
-            name
+"#
         );
 
         assert!(readme.contains("# my-app"));
@@ -250,7 +244,7 @@ jbuild build
 
     /// Helper function to convert string to PascalCase
     fn to_pascal_case(s: &str) -> String {
-        s.split(|c: char| c == '-' || c == '_' || c == '.')
+        s.split(['-', '_', '.'])
             .filter(|s| !s.is_empty())
             .map(|word| {
                 let mut chars = word.chars();
@@ -268,7 +262,7 @@ jbuild build
 // ============================================================================
 
 mod tree_command {
-    use super::*;
+    
     #[allow(unused_imports)]
     use jbuild::model::parser::parse_pom;
 
@@ -383,10 +377,8 @@ mod tree_command {
     #[test]
     fn test_tree_output_format() {
         // Test the tree output format
-        let deps = vec![
-            ("org.slf4j", "slf4j-api", "2.0.9", "compile"),
-            ("junit", "junit", "4.13.2", "test"),
-        ];
+        let deps = [("org.slf4j", "slf4j-api", "2.0.9", "compile"),
+            ("junit", "junit", "4.13.2", "test")];
 
         let mut output = String::new();
         output.push_str("com.example:my-app:1.0.0\n");
@@ -394,7 +386,7 @@ mod tree_command {
         let dep_count = deps.len();
         for (i, (group, artifact, version, scope)) in deps.iter().enumerate() {
             let prefix = if i == dep_count - 1 { "└──" } else { "├──" };
-            output.push_str(&format!("{} {}:{}:{} ({})\n", prefix, group, artifact, version, scope));
+            output.push_str(&format!("{prefix} {group}:{artifact}:{version} ({scope})\n"));
         }
 
         assert!(output.contains("com.example:my-app:1.0.0"));
@@ -509,7 +501,7 @@ mod add_command {
         let dev = false;
 
         let config = if dev { "testImplementation" } else { "implementation" };
-        let dep_line = format!("    {} '{}:{}:{}'", config, group_id, artifact_id, version);
+        let dep_line = format!("    {config} '{group_id}:{artifact_id}:{version}'");
 
         assert_eq!(dep_line, "    implementation 'org.slf4j:slf4j-api:2.0.9'");
     }
@@ -522,7 +514,7 @@ mod add_command {
         let dev = true;
 
         let config = if dev { "testImplementation" } else { "implementation" };
-        let dep_line = format!("    {} '{}:{}:{}'", config, group_id, artifact_id, version);
+        let dep_line = format!("    {config} '{group_id}:{artifact_id}:{version}'");
 
         assert_eq!(dep_line, "    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'");
     }
@@ -567,7 +559,7 @@ dependencies {
         let dep_line = "    implementation 'org.slf4j:slf4j-api:2.0.9'\n";
         let new_content = build_content.replace(
             "dependencies {",
-            &format!("dependencies {{\n{}", dep_line)
+            &format!("dependencies {{\n{dep_line}")
         );
 
         assert!(new_content.contains("implementation 'org.slf4j:slf4j-api:2.0.9'"));
@@ -610,7 +602,7 @@ repositories {
 }"#;
 
         let dep_line = "    implementation 'org.slf4j:slf4j-api:2.0.9'\n";
-        let new_content = format!("{}\n\ndependencies {{\n{}}}\n", build_content, dep_line);
+        let new_content = format!("{build_content}\n\ndependencies {{\n{dep_line}}}\n");
 
         assert!(new_content.contains("dependencies {"));
         assert!(new_content.contains("implementation 'org.slf4j:slf4j-api:2.0.9'"));
@@ -811,10 +803,9 @@ public class MyApplication {
         let main_class = Some("com.example.Main".to_string());
 
         let pom_xml = format!(
-            r#"<groupId>{}</groupId>
-    <artifactId>{}</artifactId>
-    <version>1.0.0-SNAPSHOT</version>"#,
-            group_id, project_name
+            r#"<groupId>{group_id}</groupId>
+    <artifactId>{project_name}</artifactId>
+    <version>1.0.0-SNAPSHOT</version>"#
         );
 
         assert!(pom_xml.contains("<groupId>com.example</groupId>"));
@@ -832,12 +823,11 @@ public class MyApplication {
     id 'application'
 }}
 
-group = '{}'
+group = '{group_id}'
 
 application {{
-    mainClass = '{}'
-}}"#,
-            group_id, main_class
+    mainClass = '{main_class}'
+}}"#
         );
 
         assert!(build_gradle.contains("id 'java'"));
@@ -1016,8 +1006,8 @@ mod search_command {
         let artifact = "slf4j-api";
         let version = "2.0.9";
         
-        let package = format!("{}:{}", group, artifact);
-        let output = format!("{:<50} {:<15}", package, version);
+        let package = format!("{group}:{artifact}");
+        let output = format!("{package:<50} {version:<15}");
         
         assert!(output.contains("org.slf4j:slf4j-api"));
         assert!(output.contains("2.0.9"));

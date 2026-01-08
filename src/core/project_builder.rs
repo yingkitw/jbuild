@@ -15,7 +15,7 @@ impl ProjectBuilder {
     /// Build a project from a POM file
     pub fn build(&self, pom_file: &PathBuf) -> Result<MavenProject> {
         let base_model = parse_pom_file(pom_file)
-            .with_context(|| format!("Failed to parse POM file: {:?}", pom_file))?;
+            .with_context(|| format!("Failed to parse POM file: {pom_file:?}"))?;
         
         let basedir = pom_file.parent()
             .unwrap_or_else(|| std::path::Path::new("."))

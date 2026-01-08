@@ -16,5 +16,3 @@ pub mod test_utils;
 pub use value_objects::*;
 pub use repositories::*;
 pub use services::*;
-pub use entities::*;
-pub use aggregates::*;

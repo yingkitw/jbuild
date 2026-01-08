@@ -25,7 +25,7 @@ impl MockArtifactRepository {
 
     /// Add an artifact to the mock repository
     pub fn add_artifact(&self, group_id: &str, artifact_id: &str, version: &str, path: String) {
-        let key = format!("{}:{}:{}", group_id, artifact_id, version);
+        let key = format!("{group_id}:{artifact_id}:{version}");
         self.artifacts.lock().unwrap().insert(key, path);
     }
 
@@ -43,12 +43,12 @@ impl Default for MockArtifactRepository {
 
 impl ArtifactRepository for MockArtifactRepository {
     fn exists(&self, group_id: &str, artifact_id: &str, version: &str) -> bool {
-        let key = format!("{}:{}:{}", group_id, artifact_id, version);
+        let key = format!("{group_id}:{artifact_id}:{version}");
         self.artifacts.lock().unwrap().contains_key(&key)
     }
 
     fn get_path(&self, group_id: &str, artifact_id: &str, version: &str) -> MavenResult<String> {
-        let key = format!("{}:{}:{}", group_id, artifact_id, version);
+        let key = format!("{group_id}:{artifact_id}:{version}");
         self.artifacts
             .lock()
             .unwrap()
@@ -56,14 +56,13 @@ impl ArtifactRepository for MockArtifactRepository {
             .cloned()
             .ok_or_else(|| {
                 crate::error::MavenError::RepositoryError(format!(
-                    "Artifact not found: {}:{}:{}",
-                    group_id, artifact_id, version
+                    "Artifact not found: {group_id}:{artifact_id}:{version}"
                 ))
             })
     }
 
     fn store(&self, group_id: &str, artifact_id: &str, version: &str, path: &Path) -> MavenResult<()> {
-        let key = format!("{}:{}:{}", group_id, artifact_id, version);
+        let key = format!("{group_id}:{artifact_id}:{version}");
         self.artifacts
             .lock()
             .unwrap()
@@ -95,13 +94,13 @@ impl MockDependencyResolver {
         version: &str,
         path: String,
     ) {
-        let key = format!("{}:{}:{}", group_id, artifact_id, version);
+        let key = format!("{group_id}:{artifact_id}:{version}");
         self.resolutions.lock().unwrap().insert(key, Some(path));
     }
 
     /// Register a failed resolution
     pub fn register_missing(&self, group_id: &str, artifact_id: &str, version: &str) {
-        let key = format!("{}:{}:{}", group_id, artifact_id, version);
+        let key = format!("{group_id}:{artifact_id}:{version}");
         self.resolutions.lock().unwrap().insert(key, None);
     }
 
@@ -124,7 +123,7 @@ impl DependencyResolutionStrategy for MockDependencyResolver {
         artifact_id: &str,
         version: &str,
     ) -> MavenResult<Option<String>> {
-        let key = format!("{}:{}:{}", group_id, artifact_id, version);
+        let key = format!("{group_id}:{artifact_id}:{version}");
         Ok(self.resolutions.lock().unwrap().get(&key).cloned().flatten())
     }
 

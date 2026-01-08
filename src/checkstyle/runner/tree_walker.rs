@@ -73,7 +73,7 @@ impl TreeWalker {
                 for token_id in tokens {
                     self.token_to_comment_checks
                         .entry(token_id)
-                        .or_insert_with(Vec::new)
+                        .or_default()
                         .push(check_idx);
                 }
             } else {
@@ -82,7 +82,7 @@ impl TreeWalker {
                 for token_id in tokens {
                     self.token_to_ordinary_checks
                         .entry(token_id)
-                        .or_insert_with(Vec::new)
+                        .or_default()
                         .push(check_idx);
                 }
             }

@@ -48,14 +48,13 @@ fn find_main_class_in_dir(src_dir: &Path) -> Result<Option<String>> {
                     .context("Failed to get relative path")?;
                 let class_name = relative
                     .to_string_lossy()
-                    .replace('/', ".")
-                    .replace('\\', ".")
+                    .replace(['/', '\\'], ".")
                     .trim_end_matches(".java")
                     .to_string();
 
                 // Combine package and class name
                 let full_class_name = if let Some(pkg) = package {
-                    format!("{}.{}", pkg, class_name)
+                    format!("{pkg}.{class_name}")
                 } else {
                     class_name
                 };

@@ -39,15 +39,13 @@ impl TestReporter {
         format!(
             "Test Summary\n\
             ============\n\
-            Tests run: {}\n\
-            Tests passed: {}\n\
-            Tests failed: {}\n\
+            Tests run: {total_tests}\n\
+            Tests passed: {passed}\n\
+            Tests failed: {failed}\n\
             \n\
-            Test methods run: {}\n\
-            Test methods passed: {}\n\
-            Test methods failed: {}\n",
-            total_tests, passed, failed,
-            total_test_methods, passed_methods, failed_methods
+            Test methods run: {total_test_methods}\n\
+            Test methods passed: {passed_methods}\n\
+            Test methods failed: {failed_methods}\n"
         )
     }
 
@@ -71,7 +69,7 @@ impl TestReporter {
                 report.push_str(&format!("  Errors:\n{}\n", result.error_output));
             }
             
-            report.push_str("\n");
+            report.push('\n');
         }
 
         report

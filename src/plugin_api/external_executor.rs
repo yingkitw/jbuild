@@ -25,19 +25,18 @@ impl ExternalMavenExecutor {
         );
 
         // Build Maven command: mvn groupId:artifactId:version:goal
-        let goal_string = format!("{}:{}:{}:{}", group_id, artifact_id, version, goal);
+        let goal_string = format!("{group_id}:{artifact_id}:{version}:{goal}");
         
         let output = Command::new(&mvn_exe)
             .arg(&goal_string)
             .current_dir(project_dir)
             .output()
-            .with_context(|| format!("Failed to execute Maven command: {}", goal_string))?;
+            .with_context(|| format!("Failed to execute Maven command: {goal_string}"))?;
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
             return Err(anyhow::anyhow!(
-                "Maven plugin execution failed: {}",
-                stderr
+                "Maven plugin execution failed: {stderr}"
             ));
         }
 
