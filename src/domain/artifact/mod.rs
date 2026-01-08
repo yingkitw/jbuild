@@ -6,12 +6,15 @@
 
 pub mod entities;
 pub mod value_objects;
-pub mod aggregates;
-pub mod services;
 pub mod repositories;
+pub mod services;
+pub mod aggregates;
 
-pub use entities::*;
+#[cfg(test)]
+pub mod test_utils;
+
 pub use value_objects::*;
-pub use aggregates::*;
-pub use services::*;
 pub use repositories::*;
+pub use services::*;
+pub use entities::*;
+pub use aggregates::*;

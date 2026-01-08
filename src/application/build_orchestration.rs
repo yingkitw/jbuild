@@ -41,17 +41,7 @@ impl BuildOrchestrationService {
         
         for goal in goals {
             // Try to parse as lifecycle phase
-            let phase_result = match goal.as_str() {
-                "validate" => Ok(crate::domain::maven::value_objects::LifecyclePhase::Validate),
-                "compile" => Ok(crate::domain::maven::value_objects::LifecyclePhase::Compile),
-                "test" => Ok(crate::domain::maven::value_objects::LifecyclePhase::Test),
-                "package" => Ok(crate::domain::maven::value_objects::LifecyclePhase::Package),
-                "install" => Ok(crate::domain::maven::value_objects::LifecyclePhase::Install),
-                "deploy" => Ok(crate::domain::maven::value_objects::LifecyclePhase::Deploy),
-                _ => Err(anyhow!("Not a phase")),
-            };
-            
-            if let Ok(phase) = phase_result {
+            if let Some(phase) = crate::domain::maven::value_objects::LifecyclePhase::from_str(&goal) {
                 let plan = executor.execute_phase(&project, phase)?;
                 steps.push(format!("Executed phase: {}", goal));
                 steps.extend(plan.steps().iter().map(|s| format!("  - {}", s.goal)));
@@ -104,27 +94,19 @@ impl BuildOrchestrationService {
         let build_system = BuildSystemDetector::get_build_type(project_dir)
             .ok_or_else(|| anyhow!("No build system detected"))?;
         
-        match build_system {
-            crate::domain::build_system::value_objects::BuildSystemType::Maven => {
-                let target_dir = project_dir.join("target");
-                if target_dir.exists() {
-                    std::fs::remove_dir_all(target_dir)?;
-                }
-            }
-            crate::domain::build_system::value_objects::BuildSystemType::Gradle => {
-                let build_dir = project_dir.join("build");
-                if build_dir.exists() {
-                    std::fs::remove_dir_all(build_dir)?;
-                }
-            }
-            crate::domain::build_system::value_objects::BuildSystemType::JBuild => {
-                let target_dir = project_dir.join("target");
-                if target_dir.exists() {
-                    std::fs::remove_dir_all(target_dir)?;
-                }
-            }
-        }
+        let dir_name = match build_system {
+            crate::domain::build_system::value_objects::BuildSystemType::Maven => "target",
+            crate::domain::build_system::value_objects::BuildSystemType::Gradle => "build",
+            crate::domain::build_system::value_objects::BuildSystemType::JBuild => "target",
+        };
         
+        Self::remove_dir_if_exists(&project_dir.join(dir_name))
+    }
+    
+    fn remove_dir_if_exists(dir: &Path) -> Result<()> {
+        if dir.exists() {
+            std::fs::remove_dir_all(dir)?;
+        }
         Ok(())
     }
 }

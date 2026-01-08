@@ -227,9 +227,18 @@ impl LifecyclePhase {
 
 impl fmt::Display for LifecyclePhase {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.as_str())
+        match self {
+            LifecyclePhase::Validate => write!(f, "validate"),
+            LifecyclePhase::Compile => write!(f, "compile"),
+            LifecyclePhase::Test => write!(f, "test"),
+            LifecyclePhase::Package => write!(f, "package"),
+            LifecyclePhase::Install => write!(f, "install"),
+            LifecyclePhase::Deploy => write!(f, "deploy"),
+            _ => write!(f, "{}", self.as_str()),
+        }
     }
 }
+
 
 impl PartialOrd for LifecyclePhase {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {

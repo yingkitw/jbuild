@@ -88,76 +88,21 @@ pub struct DependencyInfo {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::artifact::repositories::{ArtifactMetadata, LocalRepository};
-    use tempfile::TempDir;
-    use std::path::PathBuf;
-
-    struct MockRepo {
-        base_path: PathBuf,
-    }
-
-    impl MockRepo {
-        fn new() -> Self {
-            let temp = TempDir::new().unwrap();
-            Self {
-                base_path: temp.into_path(),
-            }
-        }
-    }
-
-    impl ArtifactRepository for MockRepo {
-        fn install(&self, _coords: &ArtifactCoordinates, _file: PathBuf) -> Result<()> {
-            Ok(())
-        }
-        
-        fn exists(&self, _coords: &ArtifactCoordinates) -> bool {
-            true
-        }
-        
-        fn path(&self) -> &PathBuf {
-            &self.base_path
-        }
-        
-        fn get_metadata(&self, coordinates: &ArtifactCoordinates) -> Result<ArtifactMetadata> {
-            Ok(ArtifactMetadata {
-                coordinates: coordinates.clone(),
-                dependencies: Vec::new(),
-            })
-        }
-        
-        fn list_versions(&self, _coordinates: &ArtifactCoordinates) -> Result<Vec<Version>> {
-            Ok(vec![
-                Version::new("1.0.0"),
-                Version::new("1.1.0"),
-                Version::new("2.0.0"),
-            ])
-        }
-        
-        fn download(&self, _coordinates: &ArtifactCoordinates) -> Result<Vec<u8>> {
-            Ok(Vec::new())
-        }
-    }
-
-    impl Clone for MockRepo {
-        fn clone(&self) -> Self {
-            Self {
-                base_path: self.base_path.clone(),
-            }
-        }
-    }
+    use crate::domain::artifact::test_utils::MockRepository;
 
     #[test]
     fn test_dependency_management_service_creation() {
-        let repo = MockRepo::new();
+        let repo = MockRepository::new();
         let _service = DependencyManagementService::new(repo);
     }
 
     #[test]
     fn test_resolve_dependencies() {
-        let repo = MockRepo::new();
-        let service = DependencyManagementService::new(repo);
-        
+        let mut repo = MockRepository::new();
         let coords = ArtifactCoordinates::from_gav("com.example:test:1.0.0").unwrap();
+        repo.add_artifact(coords.clone());
+        
+        let service = DependencyManagementService::new(repo);
         let result = service.resolve_dependencies(vec![coords], Scope::Compile);
         
         assert!(result.is_ok());
@@ -165,7 +110,7 @@ mod tests {
 
     #[test]
     fn test_list_versions() {
-        let repo = MockRepo::new();
+        let repo = MockRepository::new();
         let service = DependencyManagementService::new(repo);
         
         let coords = ArtifactCoordinates::from_gav("com.example:test:1.0.0").unwrap();
@@ -177,7 +122,7 @@ mod tests {
 
     #[test]
     fn test_get_latest_version() {
-        let repo = MockRepo::new();
+        let repo = MockRepository::new();
         let service = DependencyManagementService::new(repo);
         
         let coords = ArtifactCoordinates::from_gav("com.example:test:1.0.0").unwrap();
@@ -188,10 +133,11 @@ mod tests {
 
     #[test]
     fn test_add_dependency() {
-        let repo = MockRepo::new();
-        let service = DependencyManagementService::new(repo);
-        
+        let mut repo = MockRepository::new();
         let coords = ArtifactCoordinates::from_gav("com.example:test:1.0.0").unwrap();
+        repo.add_artifact(coords.clone());
+        
+        let service = DependencyManagementService::new(repo);
         let info = service.add_dependency(coords.clone(), Scope::Compile).unwrap();
         
         assert_eq!(info.coordinates.gav(), coords.gav());
