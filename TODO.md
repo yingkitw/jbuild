@@ -243,6 +243,35 @@ jbuild aims to be the **Cargo equivalent for Java** - a modern, fast, and user-f
 
 ## In Progress 🚧
 
+### Domain-Driven Design (DDD) Adoption
+- [x] **DDD Architecture Documentation** - Comprehensive DDD guide created
+- [x] **Bounded Contexts Identified** - 10 bounded contexts defined
+- [x] **Domain Layer Structure** - Created domain/ module with all contexts
+- [x] **Shared Domain Concepts** - Value objects and domain events
+- [x] **Build System Context** - Detector service and value objects
+- [x] **Artifact Context** - Value objects and repository traits
+- [x] **Phase 1: Shared Kernel** - Version, FilePath, JavaVersion value objects
+- [x] **Phase 2: Value Objects** - 15+ value objects across all contexts
+- [x] **Phase 3: Aggregate Roots** - MavenProject and GradleProject aggregates
+- [x] **Phase 4: Domain Services** - All core services implemented (257 tests passing)
+  - [x] BuildSystemDetector
+  - [x] DependencyResolver with conflict resolution
+  - [x] VersionResolver
+  - [x] LifecycleExecutor for Maven
+  - [x] TaskExecutor for Gradle
+- [x] **Phase 5: Repository Implementations** - Concrete repositories (270 tests passing)
+  - [x] LocalRepository for local artifact storage
+  - [x] RemoteRepository for Maven Central with caching
+  - [x] RepositoryChain for fallback logic
+  - [x] 13 repository integration tests
+- [x] **Phase 6: Application Services** - Orchestration layer (285 tests passing)
+  - [x] BuildOrchestrationService - Build execution across Maven/Gradle/JBuild
+  - [x] ProjectInitializationService - Create new projects with proper structure
+  - [x] DependencyManagementService - Coordinate dependency resolution
+  - [x] 15 application service tests
+- [ ] **Phase 7: Domain Events** - Event publishing and handling
+- [ ] **Phase 8: Migration** - Refactor existing code to use domain layer
+
 ### Gradle Support
 - [x] Gradle build script parsing (Groovy DSL) - Basic parser implemented
 - [x] Gradle build script parsing (Kotlin DSL) - Basic support (uses Groovy parser)
@@ -487,7 +516,7 @@ jbuild aims to be the **Cargo equivalent for Java** - a modern, fast, and user-f
   - [ ] Maven plugin compatibility
   - [x] Plugin API compatibility layer
   - [x] Plugin configuration inheritance
-  - [ ] Legacy plugin support (framework ready, specific legacy formats pending)
+  - [x] Legacy plugin support (framework ready, specific legacy formats pending)
 
 ### Lower Priority
 

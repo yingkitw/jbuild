@@ -1,3 +1,9 @@
+// Domain layer (DDD architecture)
+pub mod domain;
+
+// Application layer (DDD architecture)
+pub mod application;
+
 // Build system abstraction
 pub mod build;
 

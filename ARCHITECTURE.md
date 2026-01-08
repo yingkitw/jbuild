@@ -2,6 +2,20 @@
 
 This document describes the architecture of jbuild, a high-performance Rust implementation supporting both Maven and Gradle build systems.
 
+## Domain-Driven Design (DDD)
+
+jbuild adopts Domain-Driven Design principles to create a maintainable, scalable, and test-friendly architecture. See [docs/DDD_ARCHITECTURE.md](docs/DDD_ARCHITECTURE.md) for detailed DDD documentation.
+
+### Key DDD Principles
+
+- **Bounded Contexts**: Clear boundaries between domain areas (Maven, Gradle, Artifact, etc.)
+- **Ubiquitous Language**: Consistent terminology across code and documentation
+- **Entities & Value Objects**: Rich domain models with clear identity semantics
+- **Aggregates**: Consistency boundaries for domain operations
+- **Domain Services**: Business logic that doesn't belong to a single entity
+- **Repositories**: Abstraction for data access and persistence
+- **Domain Events**: Decoupled communication between contexts
+
 ## Overview
 
 jbuild is a single-crate Rust implementation that supports both Maven and Gradle build systems, organized into logical modules under `src/`. The architecture follows the core principles of both build systems while leveraging Rust's type safety and performance.
@@ -16,12 +30,25 @@ src/
 ├── main.rs             # CLI dispatcher (minimal entry point)
 ├── cli.rs              # CLI definition (Clap structs)
 │
-├── runner/             # Command implementation logic
+├── domain/             # Domain layer (DDD architecture)
+│   ├── shared/         # Shared domain concepts (value objects, events)
+│   ├── build_system/   # Build system detection and abstraction
+│   ├── maven/          # Maven bounded context
+│   ├── gradle/         # Gradle bounded context
+│   ├── artifact/       # Artifact management bounded context
+│   ├── compilation/    # Compilation bounded context
+│   ├── testing/        # Testing bounded context
+│   ├── packaging/      # Packaging bounded context
+│   ├── plugin/         # Plugin bounded context
+│   ├── config/         # Configuration bounded context
+│   └── quality/        # Code quality bounded context
+│
+├── runner/             # Command implementation logic (Application layer)
 │   ├── mod.rs          # Runner utilities
 │   ├── cli.rs          # Modularized CLI command implementations
 │   └── ...             # Other runner submodules (main_class, maven_central, etc.)
 │
-├── build/              # Build system abstraction layer
+├── build/              # Build system abstraction layer (Infrastructure)
 │   ├── detection.rs    # Build system detection (Maven vs Gradle)
 │   └── executor.rs     # Generic build executor trait
 │
@@ -114,6 +141,44 @@ src/
     └── reporting.rs    # Test reporting
 ```
 
+## Layered Architecture
+
+jbuild follows a layered architecture aligned with DDD principles:
+
+```
+┌─────────────────────────────────────────────────┐
+│         Presentation Layer (CLI)                │
+│  - cli.rs: Command definitions                  │
+│  - runner/: Command implementations             │
+│  - ui/: User interface utilities                │
+└─────────────────────────────────────────────────┘
+                      ↓
+┌─────────────────────────────────────────────────┐
+│         Application Layer                       │
+│  - Orchestrates domain services                 │
+│  - Use cases (build, test, run, etc.)          │
+│  - Transaction boundaries                       │
+│  - Located in: runner/, main.rs                 │
+└─────────────────────────────────────────────────┘
+                      ↓
+┌─────────────────────────────────────────────────┐
+│         Domain Layer                            │
+│  - Entities, Value Objects, Aggregates          │
+│  - Domain Services                              │
+│  - Domain Events                                │
+│  - Business logic and invariants                │
+│  - Located in: domain/                          │
+└─────────────────────────────────────────────────┘
+                      ↓
+┌─────────────────────────────────────────────────┐
+│         Infrastructure Layer                    │
+│  - Repository implementations                   │
+│  - External service adapters                    │
+│  - File system, HTTP, process execution         │
+│  - Located in: artifact/, resolver/, etc.       │
+└─────────────────────────────────────────────────┘
+```
+
 ## Core Components
 
 ### Execution Flow
@@ -142,14 +207,18 @@ MavenExecutionResult / GradleExecutionResult
 
 ### Key Design Decisions
 
-1. **Single Crate**: All code in one crate for simplicity and faster compilation
-2. **Modular CLI**: Decoupled CLI definition (`src/cli.rs`) from command implementation (`src/runner/cli.rs`), improving maintainability and testability.
-3. **Consolidated Model Building**: Centralized all POM inheritance, property merging, and interpolation logic into `ModelBuilder`, reducing redundancy.
-4. **Error Handling**: Uses `anyhow` for application errors, `thiserror` for library errors
-5. **Async Support**: `tokio` for I/O operations (future use for parallel builds)
-6. **Type Safety**: Strong typing for coordinates, phases, and configurations
-7. **Compiler Integration**: Native Rust implementation for Java compiler invocation with classpath management
-8. **Dual Build System Support**: Unified artifact and dependency resolution for both Maven and Gradle
+1. **Domain-Driven Design**: Explicit bounded contexts, rich domain models, and clear separation of concerns
+2. **Single Crate**: All code in one crate for simplicity and faster compilation
+3. **Layered Architecture**: Presentation → Application → Domain → Infrastructure
+4. **Modular CLI**: Decoupled CLI definition (`src/cli.rs`) from command implementation (`src/runner/cli.rs`), improving maintainability and testability
+5. **Consolidated Model Building**: Centralized all POM inheritance, property merging, and interpolation logic into `ModelBuilder`, reducing redundancy
+6. **Error Handling**: Uses `anyhow` for application errors, `thiserror` for library errors
+7. **Async Support**: `tokio` for I/O operations (future use for parallel builds)
+8. **Type Safety**: Strong typing for coordinates, phases, and configurations
+9. **Compiler Integration**: Native Rust implementation for Java compiler invocation with classpath management
+10. **Dual Build System Support**: Unified artifact and dependency resolution for both Maven and Gradle
+11. **Repository Pattern**: All data access through trait-based repository interfaces
+12. **Domain Events**: Decoupled communication between bounded contexts
 
 ### Data Flow
 
@@ -197,6 +266,106 @@ MavenExecutionResult / GradleExecutionResult
 - `which` - Finding executables (javac, mvn, java, gradle) in PATH
 - `glob` - Pattern matching for resource filtering
 - `jni` - JNI for Java integration (optional feature)
+
+## Bounded Contexts
+
+jbuild is organized into the following bounded contexts:
+
+1. **Build System Context** - Build system detection and abstraction
+2. **Maven Context** - Maven-specific implementation
+3. **Gradle Context** - Gradle-specific implementation
+4. **Artifact Context** - Artifact management and resolution
+5. **Compilation Context** - Java source compilation
+6. **Testing Context** - Test discovery and execution
+7. **Packaging Context** - Creating distributable artifacts
+8. **Plugin Context** - Plugin loading and execution
+9. **Configuration Context** - Project configuration (jbuild.toml)
+10. **Code Quality Context** - Code quality checks
+
+Each bounded context has its own:
+- **Entities**: Objects with identity
+- **Value Objects**: Immutable objects without identity (✅ Phase 2 complete)
+- **Aggregates**: Consistency boundaries
+- **Domain Services**: Business logic
+- **Repositories**: Data access abstractions
+
+### Implementation Status
+
+**Phase 2: Value Objects (Completed)**
+- ✅ `ArtifactCoordinates` with validation, GAV parsing, and repository path calculation
+- ✅ `Version` with semantic comparison and ordering (handles snapshots and qualifiers)
+- ✅ `Scope` enum for dependency scopes
+- ✅ `LifecyclePhase` enum with ordering and phase execution logic
+- ✅ `VersionRange` for dependency version constraints
+- ✅ 29 comprehensive tests passing
+
+**Phase 3: Aggregate Roots (Completed)**
+- ✅ `MavenProject` aggregate root with:
+  - Project coordinates, metadata, and configuration
+  - Dependencies and plugins as entities within the aggregate
+  - Multi-module support with validation
+  - Business invariants: no duplicate dependencies/plugins, multi-module must be POM packaging
+- ✅ `GradleProject` aggregate root with:
+  - Project identity (name, group, version)
+  - Configurations for dependency management
+  - Tasks with dependency graph validation
+  - Circular dependency detection
+  - Multi-project build support
+- ✅ Consistency boundaries enforced at aggregate level
+- ✅ 13 aggregate tests passing (243 total tests)
+
+**Phase 4: Domain Services (Completed)**
+- ✅ `BuildSystemDetector` service for detecting Maven/Gradle/JBuild projects
+- ✅ `DependencyResolver` service with:
+  - Transitive dependency resolution
+  - Circular dependency detection
+  - Conflict resolution using nearest-wins strategy
+  - Scope-based filtering
+- ✅ `VersionResolver` service for version range resolution
+- ✅ `LifecycleExecutor` service for Maven with:
+  - Phase execution planning
+  - Plugin goal binding
+  - Custom plugin execution support
+- ✅ `TaskExecutor` service for Gradle with:
+  - Task dependency resolution using topological sort
+  - Circular dependency detection
+  - Parallel execution planning with execution levels
+- ✅ **257 tests passing** (14 new service tests added)
+
+**Phase 5: Repository Implementations (Completed)**
+- ✅ `LocalRepository` for local artifact storage (~/.m2/repository)
+  - Install and retrieve artifacts
+  - List available versions
+  - POM file parsing (stub)
+- ✅ `RemoteRepository` for Maven Central with local caching
+  - Cache directory management
+  - Artifact URL generation
+  - Download stub (ready for HTTP implementation)
+- ✅ `RepositoryChain` for fallback logic
+  - Multiple repository support
+  - Automatic fallback on failure
+  - Install to first repository
+- ✅ **270 tests passing** (13 new repository tests added)
+
+**Phase 6: Application Services (Completed)**
+- ✅ `BuildOrchestrationService` for build execution
+  - Detect build system type
+  - Execute Maven phases and goals
+  - Execute Gradle tasks
+  - Clean build artifacts
+- ✅ `ProjectInitializationService` for project creation
+  - Create Maven projects with pom.xml
+  - Create Gradle projects with build.gradle
+  - Create JBuild projects with jbuild.toml
+  - Generate standard directory structure
+  - Create sample Java files
+- ✅ `DependencyManagementService` for dependency operations
+  - Resolve transitive dependencies
+  - Get latest versions
+  - Add dependencies to projects
+- ✅ **285 tests passing** (15 new application service tests added)
+
+See [docs/DDD_ARCHITECTURE.md](docs/DDD_ARCHITECTURE.md) for detailed information on each bounded context.
 
 ## Testing & Testability
 

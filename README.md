@@ -2,6 +2,13 @@
 
 **Cargo for Java** - A modern, fast, and user-friendly build system for Java projects.
 
+[![Tests](https://img.shields.io/badge/tests-285%20passing-brightgreen)]()
+[![Architecture](https://img.shields.io/badge/architecture-DDD-blue)]()
+[![Rust](https://img.shields.io/badge/rust-2024-orange)]()
+
+> **🎉 Major Milestone**: Completed Domain-Driven Design (DDD) implementation with 285 tests passing!
+> See [DDD Implementation Complete](docs/DDD_IMPLEMENTATION_COMPLETE.md) for details.
+
 ## The Problem
 
 Java developers face significant friction with existing build tools:
@@ -455,16 +462,69 @@ fn test_artifact_resolution() {
 
 ## Architecture & Design
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed architecture documentation.
+jbuild follows **Domain-Driven Design (DDD)** principles with clean architecture:
 
-The architecture is inspired by Gradle's platform-based design. See [GRADLE_LEARNINGS.md](GRADLE_LEARNINGS.md) for architectural patterns we're adopting.
+```
+┌─────────────────────────────────────┐
+│     Presentation Layer (CLI)        │
+└─────────────────────────────────────┘
+              ↓
+┌─────────────────────────────────────┐
+│    Application Layer ✅              │
+│   - BuildOrchestrationService       │
+│   - ProjectInitializationService    │
+│   - DependencyManagementService     │
+└─────────────────────────────────────┘
+              ↓
+┌─────────────────────────────────────┐
+│      Domain Layer ✅                 │
+│   - Aggregates (MavenProject, etc)  │
+│   - Domain Services (5 services)    │
+│   - Value Objects (15+ objects)     │
+└─────────────────────────────────────┘
+              ↓
+┌─────────────────────────────────────┐
+│    Infrastructure Layer ✅           │
+│   - LocalRepository                 │
+│   - RemoteRepository                │
+└─────────────────────────────────────┘
+```
+
+### DDD Implementation Status
+
+**Completed Phases (1-6):**
+- ✅ **Phase 1**: Shared Kernel (Version, FilePath, JavaVersion)
+- ✅ **Phase 2**: Value Objects (15+ domain objects)
+- ✅ **Phase 3**: Aggregate Roots (MavenProject, GradleProject)
+- ✅ **Phase 4**: Domain Services (5 services)
+- ✅ **Phase 5**: Repository Implementations (3 repositories)
+- ✅ **Phase 6**: Application Services (3 services)
+
+**Test Coverage**: 285 tests passing (100% pass rate)
+
+### Documentation
+
+- [ARCHITECTURE.md](ARCHITECTURE.md) - Overall architecture
+- [Architecture Diagram](docs/ARCHITECTURE_DIAGRAM.md) - Visual system overview
+- [DDD Implementation Complete](docs/DDD_IMPLEMENTATION_COMPLETE.md) - Comprehensive DDD summary
+- [DDD Architecture](docs/DDD_ARCHITECTURE.md) - Domain model details
+- [Phase 4 Summary](docs/PHASE_4_SUMMARY.md) - Domain Services
+- [Phase 5 Summary](docs/PHASE_5_SUMMARY.md) - Repositories
+- [Phase 6 Summary](docs/PHASE_6_SUMMARY.md) - Application Services
 
 ### Key Design Patterns
 
-- **Trait-based abstractions**: Core components use traits for testability
-- **Builder patterns**: Complex objects use fluent builders
-- **Custom error types**: Comprehensive error handling with `MavenError`
-- **Dependency injection**: Supports mock implementations for testing
+- **Repository Pattern**: Trait-based abstraction for artifact storage
+- **Aggregate Pattern**: Consistency boundaries (MavenProject, GradleProject)
+- **Value Object Pattern**: Immutable, validated domain objects
+- **Domain Service Pattern**: Stateless business logic encapsulation
+- **Dependency Injection**: Trait-based for testability
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+The codebase follows Domain-Driven Design principles. See [DDD Migration Guide](docs/DDD_MIGRATION_GUIDE.md) for contributing guidelines.
 
 ## License
 

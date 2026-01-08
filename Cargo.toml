@@ -49,6 +49,9 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 anyhow = "1.0"
 thiserror = "1.0"
 
+# System directories
+dirs = "5.0"
+
 # Path handling
 pathdiff = "0.2"
 
