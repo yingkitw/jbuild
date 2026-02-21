@@ -11,11 +11,7 @@ impl ModelBuilder {
     }
 
     /// Build effective model from base model and parent
-    pub fn build_effective_model(
-        &self,
-        model: Model,
-        parent: Option<Model>,
-    ) -> Model {
+    pub fn build_effective_model(&self, model: Model, parent: Option<Model>) -> Model {
         let mut effective = model.clone();
 
         if let Some(parent_model) = parent {
@@ -34,7 +30,9 @@ impl ModelBuilder {
             let mut properties = effective.properties.unwrap_or_default();
             if let Some(parent_props) = &parent_model.properties {
                 for (key, value) in parent_props {
-                    properties.entry(key.clone()).or_insert_with(|| value.clone());
+                    properties
+                        .entry(key.clone())
+                        .or_insert_with(|| value.clone());
                 }
             }
             effective.properties = Some(properties);
@@ -43,15 +41,14 @@ impl ModelBuilder {
             if let Some(parent_dep_mgmt) = &parent_model.dependency_management {
                 if effective.dependency_management.is_none() {
                     effective.dependency_management = Some(parent_dep_mgmt.clone());
-                } else {
-                    let child_dep_mgmt = effective.dependency_management.as_mut().unwrap();
+                } else if let Some(child_dep_mgmt) = &mut effective.dependency_management {
                     if let Some(parent_deps) = &parent_dep_mgmt.dependencies {
                         if child_dep_mgmt.dependencies.is_none() {
                             child_dep_mgmt.dependencies = Some(parent_deps.clone());
-                        } else {
-                            let child_deps = child_dep_mgmt.dependencies.as_mut().unwrap();
+                        } else if let Some(child_deps) = &mut child_dep_mgmt.dependencies {
                             for parent_dep in &parent_deps.dependencies {
-                                let parent_key = format!("{}:{}", parent_dep.group_id, parent_dep.artifact_id);
+                                let parent_key =
+                                    format!("{}:{}", parent_dep.group_id, parent_dep.artifact_id);
                                 if !child_deps.dependencies.iter().any(|d| {
                                     format!("{}:{}", d.group_id, d.artifact_id) == parent_key
                                 }) {
@@ -67,35 +64,35 @@ impl ModelBuilder {
             if let Some(parent_build) = &parent_model.build {
                 if effective.build.is_none() {
                     effective.build = Some(parent_build.clone());
-                } else {
-                    let child_build = effective.build.as_mut().unwrap();
+                } else if let Some(child_build) = &mut effective.build {
                     if child_build.source_directory.is_none() {
                         child_build.source_directory = parent_build.source_directory.clone();
                     }
                     if child_build.test_source_directory.is_none() {
-                        child_build.test_source_directory = parent_build.test_source_directory.clone();
+                        child_build.test_source_directory =
+                            parent_build.test_source_directory.clone();
                     }
                     if child_build.output_directory.is_none() {
                         child_build.output_directory = parent_build.output_directory.clone();
                     }
                     if child_build.test_output_directory.is_none() {
-                        child_build.test_output_directory = parent_build.test_output_directory.clone();
+                        child_build.test_output_directory =
+                            parent_build.test_output_directory.clone();
                     }
 
                     // Merge plugin management
                     if let Some(parent_plugin_mgmt) = &parent_build.plugin_management {
                         if child_build.plugin_management.is_none() {
                             child_build.plugin_management = Some(parent_plugin_mgmt.clone());
-                        } else {
-                            let child_plugin_mgmt = child_build.plugin_management.as_mut().unwrap();
+                        } else if let Some(child_plugin_mgmt) = &mut child_build.plugin_management {
                             if let Some(parent_plugins) = &parent_plugin_mgmt.plugins {
                                 if child_plugin_mgmt.plugins.is_none() {
                                     child_plugin_mgmt.plugins = Some(parent_plugins.clone());
-                                } else {
-                                    let child_plugins = child_plugin_mgmt.plugins.as_mut().unwrap();
+                                } else if let Some(child_plugins) = &mut child_plugin_mgmt.plugins {
                                     for parent_plugin in parent_plugins {
                                         if !child_plugins.iter().any(|p| {
-                                            p.group_id == parent_plugin.group_id && p.artifact_id == parent_plugin.artifact_id
+                                            p.group_id == parent_plugin.group_id
+                                                && p.artifact_id == parent_plugin.artifact_id
                                         }) {
                                             child_plugins.push(parent_plugin.clone());
                                         }
@@ -113,8 +110,7 @@ impl ModelBuilder {
 
     /// Interpolate model properties
     pub fn interpolate(&self, model: &mut Model, properties: &HashMap<String, String>) {
-        let interpolator = PropertyInterpolator::new()
-            .add_properties(properties.clone());
+        let interpolator = PropertyInterpolator::new().add_properties(properties.clone());
 
         // Interpolate basic info
         if let Ok(val) = interpolator.interpolate(&model.group_id) {
@@ -156,4 +152,3 @@ impl Default for ModelBuilder {
         Self::new()
     }
 }
-

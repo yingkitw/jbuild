@@ -1,6 +1,7 @@
 //! Value objects for Artifact context
 
 use anyhow::{anyhow, Result};
+use crate::domain::shared::validate_fields;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::path::PathBuf;
@@ -27,15 +28,11 @@ impl ArtifactCoordinates {
         let version = version.into();
 
         // Validate inputs
-        if group_id.trim().is_empty() {
-            return Err(anyhow!("Group ID cannot be empty"));
-        }
-        if artifact_id.trim().is_empty() {
-            return Err(anyhow!("Artifact ID cannot be empty"));
-        }
-        if version.trim().is_empty() {
-            return Err(anyhow!("Version cannot be empty"));
-        }
+        validate_fields(&[
+            (&group_id, "Group ID"),
+            (&artifact_id, "Artifact ID"),
+            (&version, "Version"),
+        ])?;
 
         Ok(Self {
             group_id,
@@ -69,7 +66,7 @@ impl ArtifactCoordinates {
         }
 
         let mut coords = Self::new(parts[0], parts[1], parts[2])?;
-        
+
         // Handle classifier and extension if present
         if parts.len() >= 4 {
             coords.classifier = Some(parts[3].to_string());
@@ -138,15 +135,15 @@ impl ArtifactCoordinates {
     /// Returns the repository path for this artifact
     pub fn repository_path(&self) -> PathBuf {
         let mut path = PathBuf::new();
-        
+
         // Convert group ID to path (e.g., org.example -> org/example)
         for part in self.group_id.split('.') {
             path.push(part);
         }
-        
+
         path.push(&self.artifact_id);
         path.push(&self.version);
-        
+
         // Build filename
         let mut filename = format!("{}-{}", self.artifact_id, self.version);
         if let Some(classifier) = &self.classifier {
@@ -155,7 +152,7 @@ impl ArtifactCoordinates {
         }
         filename.push('.');
         filename.push_str(&self.extension);
-        
+
         path.push(filename);
         path
     }
@@ -180,8 +177,7 @@ impl fmt::Display for ArtifactCoordinates {
 }
 
 /// Dependency scope value object
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 pub enum Scope {
     #[default]
     Compile,
@@ -192,37 +188,25 @@ pub enum Scope {
     Import,
 }
 
-impl Scope {
-    pub fn as_str(&self) -> &str {
-        match self {
-            Scope::Compile => "compile",
-            Scope::Provided => "provided",
-            Scope::Runtime => "runtime",
-            Scope::Test => "test",
-            Scope::System => "system",
-            Scope::Import => "import",
-        }
-    }
-
-    pub fn from_str(s: &str) -> Option<Self> {
-        match s.to_lowercase().as_str() {
-            "compile" => Some(Scope::Compile),
-            "provided" => Some(Scope::Provided),
-            "runtime" => Some(Scope::Runtime),
-            "test" => Some(Scope::Test),
-            "system" => Some(Scope::System),
-            "import" => Some(Scope::Import),
-            _ => None,
-        }
-    }
-}
-
+crate::impl_str_conversion!(Scope, {
+    Compile => "compile",
+    Provided => "provided",
+    Runtime => "runtime",
+    Test => "test",
+    System => "system",
+    Import => "import",
+});
 
 /// Version range value object
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum VersionRange {
     Exact(String),
-    Range { min: String, max: String, min_inclusive: bool, max_inclusive: bool },
+    Range {
+        min: String,
+        max: String,
+        min_inclusive: bool,
+        max_inclusive: bool,
+    },
     Latest,
 }
 
@@ -248,7 +232,12 @@ impl VersionRange {
         match self {
             VersionRange::Exact(v) => v == version,
             VersionRange::Latest => true,
-            VersionRange::Range { min, max, min_inclusive, max_inclusive } => {
+            VersionRange::Range {
+                min,
+                max,
+                min_inclusive,
+                max_inclusive,
+            } => {
                 let min_match = if *min_inclusive {
                     version >= min.as_str()
                 } else {
@@ -268,6 +257,7 @@ impl VersionRange {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::str::FromStr;
 
     #[test]
     fn test_artifact_coordinates_new() {
@@ -335,9 +325,9 @@ mod tests {
 
     #[test]
     fn test_scope_from_str() {
-        assert_eq!(Scope::from_str("compile"), Some(Scope::Compile));
-        assert_eq!(Scope::from_str("test"), Some(Scope::Test));
-        assert_eq!(Scope::from_str("invalid"), None);
+        assert_eq!(Scope::from_str("compile"), Ok(Scope::Compile));
+        assert_eq!(Scope::from_str("test"), Ok(Scope::Test));
+        assert!(Scope::from_str("invalid").is_err());
     }
 
     #[test]

@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::str::FromStr;
 
 /// Maven lifecycle phase
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -56,16 +57,12 @@ impl LifecyclePhase {
             LifecyclePhase::Verify,
             LifecyclePhase::Install,
             LifecyclePhase::Deploy,
+            LifecyclePhase::Clean,
         ]
     }
 
-    /// Get clean lifecycle phases
-    pub fn clean_phases() -> Vec<LifecyclePhase> {
-        vec![LifecyclePhase::Clean]
-    }
-
-    /// Get the order/index of this phase in the lifecycle
-    pub fn order(&self) -> usize {
+    /// Get phase order for sorting
+    pub fn order(&self) -> u32 {
         match self {
             LifecyclePhase::Validate => 0,
             LifecyclePhase::Initialize => 1,
@@ -90,53 +87,69 @@ impl LifecyclePhase {
             LifecyclePhase::Verify => 20,
             LifecyclePhase::Install => 21,
             LifecyclePhase::Deploy => 22,
-            LifecyclePhase::Clean => 100, // Clean is separate lifecycle
+            LifecyclePhase::Clean => 100,
         }
     }
 
-    /// Get all phases up to and including the target phase
-    pub fn phases_up_to(target: &LifecyclePhase) -> Vec<LifecyclePhase> {
-        let target_order = target.order();
-        Self::all().into_iter()
+    /// Returns all phases up to this phase
+    pub fn phases_up_to(&self) -> Vec<LifecyclePhase> {
+        let target_order = self.order();
+        Self::all()
+            .into_iter()
             .filter(|p| p.order() <= target_order)
             .collect()
     }
 
-    /// Parse a lifecycle phase from string
-    pub fn from_str(s: &str) -> Option<Self> {
+    /// Get clean lifecycle phases
+    pub fn clean_phases() -> Vec<LifecyclePhase> {
+        vec![LifecyclePhase::Clean]
+    }
+}
+
+impl FromStr for LifecyclePhase {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "validate" => Some(LifecyclePhase::Validate),
-            "initialize" => Some(LifecyclePhase::Initialize),
-            "generate-sources" => Some(LifecyclePhase::GenerateSources),
-            "process-sources" => Some(LifecyclePhase::ProcessSources),
-            "generate-resources" => Some(LifecyclePhase::GenerateResources),
-            "process-resources" => Some(LifecyclePhase::ProcessResources),
-            "compile" => Some(LifecyclePhase::Compile),
-            "process-classes" => Some(LifecyclePhase::ProcessClasses),
-            "generate-test-sources" => Some(LifecyclePhase::GenerateTestSources),
-            "process-test-sources" => Some(LifecyclePhase::ProcessTestSources),
-            "generate-test-resources" => Some(LifecyclePhase::GenerateTestResources),
-            "process-test-resources" => Some(LifecyclePhase::ProcessTestResources),
-            "test-compile" => Some(LifecyclePhase::TestCompile),
-            "process-test-classes" => Some(LifecyclePhase::ProcessTestClasses),
-            "test" => Some(LifecyclePhase::Test),
-            "prepare-package" => Some(LifecyclePhase::PreparePackage),
-            "package" => Some(LifecyclePhase::Package),
-            "pre-integration-test" => Some(LifecyclePhase::PreIntegrationTest),
-            "integration-test" => Some(LifecyclePhase::IntegrationTest),
-            "post-integration-test" => Some(LifecyclePhase::PostIntegrationTest),
-            "verify" => Some(LifecyclePhase::Verify),
-            "install" => Some(LifecyclePhase::Install),
-            "deploy" => Some(LifecyclePhase::Deploy),
-            "clean" => Some(LifecyclePhase::Clean),
-            _ => None,
+            "validate" => Ok(LifecyclePhase::Validate),
+            "initialize" => Ok(LifecyclePhase::Initialize),
+            "generate-sources" => Ok(LifecyclePhase::GenerateSources),
+            "process-sources" => Ok(LifecyclePhase::ProcessSources),
+            "generate-resources" => Ok(LifecyclePhase::GenerateResources),
+            "process-resources" => Ok(LifecyclePhase::ProcessResources),
+            "compile" => Ok(LifecyclePhase::Compile),
+            "process-classes" => Ok(LifecyclePhase::ProcessClasses),
+            "generate-test-sources" => Ok(LifecyclePhase::GenerateTestSources),
+            "process-test-sources" => Ok(LifecyclePhase::ProcessTestSources),
+            "generate-test-resources" => Ok(LifecyclePhase::GenerateTestResources),
+            "process-test-resources" => Ok(LifecyclePhase::ProcessTestResources),
+            "test-compile" => Ok(LifecyclePhase::TestCompile),
+            "process-test-classes" => Ok(LifecyclePhase::ProcessTestClasses),
+            "test" => Ok(LifecyclePhase::Test),
+            "prepare-package" => Ok(LifecyclePhase::PreparePackage),
+            "package" => Ok(LifecyclePhase::Package),
+            "pre-integration-test" => Ok(LifecyclePhase::PreIntegrationTest),
+            "integration-test" => Ok(LifecyclePhase::IntegrationTest),
+            "post-integration-test" => Ok(LifecyclePhase::PostIntegrationTest),
+            "verify" => Ok(LifecyclePhase::Verify),
+            "install" => Ok(LifecyclePhase::Install),
+            "deploy" => Ok(LifecyclePhase::Deploy),
+            "clean" => Ok(LifecyclePhase::Clean),
+            _ => Err(format!("Invalid lifecycle phase: {}", s)),
         }
     }
 }
 
 impl std::fmt::Display for LifecyclePhase {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
+        write!(f, "{}", self.as_str())
+    }
+}
+
+impl LifecyclePhase {
+    /// Returns the phase name as a string
+    pub fn as_str(&self) -> &str {
+        match self {
             LifecyclePhase::Validate => "validate",
             LifecyclePhase::Initialize => "initialize",
             LifecyclePhase::GenerateSources => "generate-sources",
@@ -161,8 +174,7 @@ impl std::fmt::Display for LifecyclePhase {
             LifecyclePhase::Install => "install",
             LifecyclePhase::Deploy => "deploy",
             LifecyclePhase::Clean => "clean",
-        };
-        write!(f, "{s}")
+        }
     }
 }
 
@@ -176,6 +188,7 @@ pub struct Lifecycle {
     pub bindings: HashMap<LifecyclePhase, Vec<PluginBinding>>,
 }
 
+/// Plugin binding for lifecycle phase
 #[derive(Debug, Clone)]
 pub struct PluginBinding {
     pub group_id: String,
@@ -183,13 +196,11 @@ pub struct PluginBinding {
     pub goal: String,
 }
 
-impl Lifecycle {
-    /// Get the default Maven lifecycle
-    pub fn default() -> Self {
+impl Default for Lifecycle {
+    fn default() -> Self {
         Self {
             phases: LifecyclePhase::all(),
             bindings: HashMap::new(),
         }
     }
 }
-

@@ -1,6 +1,6 @@
 [package]
 name = "jbuild"
-version = "0.1.5"
+version = "0.1.6"
 edition = "2024"
 authors = ["Ying Kit WONG"]
 license = "Apache-2.0"
@@ -13,7 +13,7 @@ categories = ["development-tools::build-utils", "command-line-utilities"]
 readme = "README.md"
 
 [package.metadata]
-supported_jdk = ["8", "11", "17", "21"]
+supported_jdk = ["8", "11", "17", "21","24"]
 supported_jvm = ["openjdk", "temurin", "oraclejdk"]
 supported_runtimes = ["wildfly", "jboss-eap", "websphere-traditional", "websphere-liberty", "spring-boot"]
 
@@ -105,7 +105,5 @@ notify = "6.1"
 toml = "0.8"
 
 [dev-dependencies]
-# Snapshot testing
-insta = "1.38"
 # Temporary directories for testing
 tempfile = "3.10"

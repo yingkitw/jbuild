@@ -1,7 +1,7 @@
 //! Domain events for decoupled communication between bounded contexts
 
-use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
+use std::time::SystemTime;
 
 /// Base trait for all domain events
 pub trait DomainEvent: Send + Sync {

@@ -1,4 +1,5 @@
 use crate::core::lifecycle::LifecyclePhase;
+use std::str::FromStr;
 
 /// Goal parser - parses Maven goals and maps them to lifecycle phases
 pub struct GoalParser;
@@ -24,7 +25,7 @@ impl GoalParser {
     /// Parse a goal string into a Goal
     pub fn parse(&self, goal_str: &str) -> Result<Goal, String> {
         // Check if it's a lifecycle phase
-        if let Some(phase) = LifecyclePhase::from_str(goal_str) {
+        if let Ok(phase) = LifecyclePhase::from_str(goal_str) {
             return Ok(Goal::Phase(phase));
         }
 

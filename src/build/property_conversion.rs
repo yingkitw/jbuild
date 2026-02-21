@@ -42,23 +42,23 @@ impl PropertyConverter {
             "project.artifactId" => "name".to_string(),
             "project.name" => "projectName".to_string(),
             "project.description" => "description".to_string(),
-            
+
             // Build properties
             "project.build.directory" => "buildDir".to_string(),
             "project.build.sourceDirectory" => "sourceSets.main.java.srcDirs".to_string(),
             "project.build.testSourceDirectory" => "sourceSets.test.java.srcDirs".to_string(),
             "project.build.outputDirectory" => "sourceSets.main.output.classesDirs".to_string(),
-            
+
             // Compiler properties
             "maven.compiler.source" => "sourceCompatibility".to_string(),
             "maven.compiler.target" => "targetCompatibility".to_string(),
             "maven.compiler.release" => "javaLanguageVersion".to_string(),
             "project.build.sourceEncoding" => "compileJava.options.encoding".to_string(),
-            
+
             // Test properties
             "maven.test.skip" => "test.enabled".to_string(),
             "skipTests" => "test.enabled".to_string(),
-            
+
             // Default: keep as-is but convert dots to underscores for ext properties
             _ => {
                 if key.contains('.') {
@@ -80,11 +80,11 @@ impl PropertyConverter {
             "buildDir" => "project.build.directory".to_string(),
             "sourceCompatibility" => "maven.compiler.source".to_string(),
             "targetCompatibility" => "maven.compiler.target".to_string(),
-            
+
             // Default: keep as-is
             _ => {
-                if key.starts_with("ext.") {
-                    key[4..].replace('_', ".")
+                if let Some(suffix) = key.strip_prefix("ext.") {
+                    suffix.replace('_', ".")
                 } else {
                     key.to_string()
                 }
@@ -95,7 +95,10 @@ impl PropertyConverter {
     /// Get standard Maven properties from a project
     pub fn standard_maven_properties() -> HashMap<String, String> {
         let mut props = HashMap::new();
-        props.insert("project.build.sourceEncoding".to_string(), "UTF-8".to_string());
+        props.insert(
+            "project.build.sourceEncoding".to_string(),
+            "UTF-8".to_string(),
+        );
         props.insert("maven.compiler.source".to_string(), "17".to_string());
         props.insert("maven.compiler.target".to_string(), "17".to_string());
         props
@@ -113,24 +116,24 @@ impl PropertyConverter {
 /// Maven property interpolation pattern: ${property.name}
 pub fn interpolate_maven_properties(text: &str, properties: &HashMap<String, String>) -> String {
     let mut result = text.to_string();
-    
+
     for (key, value) in properties {
         let pattern = format!("${{{key}}}");
         result = result.replace(&pattern, value);
     }
-    
+
     result
 }
 
 /// Gradle property interpolation pattern: $propertyName or ${propertyName}
 pub fn interpolate_gradle_properties(text: &str, properties: &HashMap<String, String>) -> String {
     let mut result = text.to_string();
-    
+
     for (key, value) in properties {
         // ${property} format
         let pattern1 = format!("${{{key}}}");
         result = result.replace(&pattern1, value);
-        
+
         // $property format (only for simple identifiers)
         if key.chars().all(|c| c.is_alphanumeric() || c == '_') {
             let pattern2 = format!("${key}");
@@ -138,7 +141,7 @@ pub fn interpolate_gradle_properties(text: &str, properties: &HashMap<String, St
             result = result.replace(&pattern2, value);
         }
     }
-    
+
     result
 }
 
@@ -154,7 +157,10 @@ mod tests {
 
         let gradle_props = PropertyConverter::maven_to_gradle(&maven_props);
 
-        assert_eq!(gradle_props.get("sourceCompatibility"), Some(&"17".to_string()));
+        assert_eq!(
+            gradle_props.get("sourceCompatibility"),
+            Some(&"17".to_string())
+        );
         assert_eq!(gradle_props.get("version"), Some(&"1.0.0".to_string()));
     }
 
@@ -166,8 +172,14 @@ mod tests {
 
         let maven_props = PropertyConverter::gradle_to_maven(&gradle_props);
 
-        assert_eq!(maven_props.get("maven.compiler.source"), Some(&"17".to_string()));
-        assert_eq!(maven_props.get("project.version"), Some(&"1.0.0".to_string()));
+        assert_eq!(
+            maven_props.get("maven.compiler.source"),
+            Some(&"17".to_string())
+        );
+        assert_eq!(
+            maven_props.get("project.version"),
+            Some(&"1.0.0".to_string())
+        );
     }
 
     #[test]

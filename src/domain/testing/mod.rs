@@ -3,6 +3,5 @@
 //! Responsible for test discovery and execution.
 
 pub mod aggregates;
-pub mod value_objects;
 pub mod services;
-
+pub mod value_objects;

@@ -3,6 +3,5 @@
 //! Responsible for plugin loading and execution.
 
 pub mod aggregates;
-pub mod value_objects;
 pub mod services;
-
+pub mod value_objects;

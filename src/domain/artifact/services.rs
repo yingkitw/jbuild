@@ -16,7 +16,7 @@ impl<R: ArtifactRepository> DependencyResolver<R> {
     pub fn new(repository: R) -> Self {
         Self { repository }
     }
-    
+
     /// Resolves all transitive dependencies for a given artifact
     pub fn resolve_transitive(
         &self,
@@ -26,7 +26,7 @@ impl<R: ArtifactRepository> DependencyResolver<R> {
         let mut resolved = Vec::new();
         let mut visited = HashSet::new();
         let mut processing = HashSet::new();
-        
+
         self.resolve_recursive(
             coordinates,
             scope,
@@ -35,10 +35,10 @@ impl<R: ArtifactRepository> DependencyResolver<R> {
             &mut visited,
             &mut processing,
         )?;
-        
+
         Ok(resolved)
     }
-    
+
     fn resolve_recursive(
         &self,
         coordinates: &ArtifactCoordinates,
@@ -49,22 +49,22 @@ impl<R: ArtifactRepository> DependencyResolver<R> {
         processing: &mut HashSet<String>,
     ) -> Result<()> {
         let key = coordinates.gav();
-        
+
         // Check for circular dependencies
         if processing.contains(&key) {
             return Err(anyhow!("Circular dependency detected: {key}"));
         }
-        
+
         // Skip if already visited
         if visited.contains(&key) {
             return Ok(());
         }
-        
+
         processing.insert(key.clone());
-        
+
         // Fetch artifact metadata from repository
         let metadata = self.repository.get_metadata(coordinates)?;
-        
+
         // Add to resolved list
         resolved.push(ResolvedDependency {
             coordinates: coordinates.clone(),
@@ -72,26 +72,30 @@ impl<R: ArtifactRepository> DependencyResolver<R> {
             depth,
             version: Version::new(coordinates.version()),
         });
-        
+
         visited.insert(key.clone());
         processing.remove(&key);
-        
+
         Ok(())
     }
-    
+
     /// Resolves version conflicts using nearest-wins strategy
     pub fn resolve_conflicts(
         &self,
         dependencies: Vec<ResolvedDependency>,
     ) -> Vec<ResolvedDependency> {
         let mut by_artifact: HashMap<String, Vec<ResolvedDependency>> = HashMap::new();
-        
+
         // Group by artifact (groupId:artifactId)
         for dep in dependencies {
-            let key = format!("{}:{}", dep.coordinates.group_id(), dep.coordinates.artifact_id());
+            let key = format!(
+                "{}:{}",
+                dep.coordinates.group_id(),
+                dep.coordinates.artifact_id()
+            );
             by_artifact.entry(key).or_default().push(dep);
         }
-        
+
         // For each artifact, select the version using nearest-wins
         let mut result = Vec::new();
         for (_, mut versions) in by_artifact {
@@ -99,19 +103,17 @@ impl<R: ArtifactRepository> DependencyResolver<R> {
                 result.push(versions.pop().unwrap());
             } else {
                 // Sort by depth (nearest first), then by version (highest)
-                versions.sort_by(|a, b| {
-                    match a.depth.cmp(&b.depth) {
-                        std::cmp::Ordering::Equal => b.version.cmp(&a.version),
-                        other => other,
-                    }
+                versions.sort_by(|a, b| match a.depth.cmp(&b.depth) {
+                    std::cmp::Ordering::Equal => b.version.cmp(&a.version),
+                    other => other,
                 });
                 result.push(versions.into_iter().next().unwrap());
             }
         }
-        
+
         result
     }
-    
+
     /// Filters dependencies by scope
     pub fn filter_by_scope(
         &self,
@@ -144,7 +146,7 @@ impl<R: ArtifactRepository> VersionResolver<R> {
     pub fn new(repository: R) -> Self {
         Self { repository }
     }
-    
+
     /// Resolves a version range to the best matching version
     pub fn resolve_range(
         &self,
@@ -153,33 +155,30 @@ impl<R: ArtifactRepository> VersionResolver<R> {
     ) -> Result<Version> {
         // Get available versions from repository
         let available = self.repository.list_versions(coordinates)?;
-        
+
         // Filter versions that match the range
         let matching: Vec<_> = available
             .iter()
             .filter(|v| range.matches(v.as_str()))
             .collect();
-        
+
         if matching.is_empty() {
             return Err(anyhow!(
                 "No version found matching range for {}",
                 coordinates.gav()
             ));
         }
-        
+
         // Return the highest matching version
-        let best = matching
-            .into_iter()
-            .max()
-            .unwrap();
-        
+        let best = matching.into_iter().max().unwrap();
+
         Ok(best.clone())
     }
-    
+
     /// Resolves latest version for an artifact
     pub fn resolve_latest(&self, coordinates: &ArtifactCoordinates) -> Result<Version> {
         let versions = self.repository.list_versions(coordinates)?;
-        
+
         versions
             .into_iter()
             .max()
@@ -197,10 +196,10 @@ mod tests {
         let mut repo = MockRepository::new();
         let coords = ArtifactCoordinates::new("com.example", "lib", "1.0.0").unwrap();
         repo.add_artifact(coords.clone());
-        
+
         let resolver = DependencyResolver::new(repo);
         let result = resolver.resolve_transitive(&coords, Scope::Compile);
-        
+
         assert!(result.is_ok());
         let resolved = result.unwrap();
         assert_eq!(resolved.len(), 1);
@@ -211,7 +210,7 @@ mod tests {
     fn test_resolve_conflicts() {
         let repo = MockRepository::new();
         let resolver = DependencyResolver::new(repo);
-        
+
         let deps = vec![
             ResolvedDependency {
                 coordinates: ArtifactCoordinates::new("com.example", "lib", "1.0.0").unwrap(),
@@ -226,9 +225,9 @@ mod tests {
                 version: Version::new("2.0.0"),
             },
         ];
-        
+
         let result = resolver.resolve_conflicts(deps);
-        
+
         // Should select 1.0.0 (nearest wins - depth 0)
         assert_eq!(result.len(), 1);
         assert_eq!(result[0].version.as_str(), "1.0.0");
@@ -238,10 +237,10 @@ mod tests {
     fn test_version_resolver() {
         let repo = MockRepository::new();
         let resolver = VersionResolver::new(repo);
-        
+
         let coords = ArtifactCoordinates::new("com.example", "lib", "1.0.0").unwrap();
         let result = resolver.resolve_latest(&coords);
-        
+
         assert!(result.is_ok());
         assert_eq!(result.unwrap().as_str(), "2.0.0");
     }

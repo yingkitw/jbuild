@@ -9,7 +9,7 @@ use anyhow::{Result, anyhow};
 /// Java toolchain specification
 #[derive(Debug, Clone)]
 pub struct JavaToolchain {
-    /// Java language version (e.g., 11, 17, 21)
+    /// Java language version (e.g., 11, 17, 21, 24)
     pub language_version: u32,
     /// Vendor (optional)
     pub vendor: Option<JavaVendor>,

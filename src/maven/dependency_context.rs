@@ -5,6 +5,7 @@
 
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
+use std::str::FromStr;
 
 /// Dependency scope
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -24,18 +25,6 @@ pub enum DependencyScope {
 }
 
 impl DependencyScope {
-    pub fn from_str(s: &str) -> Self {
-        match s.to_lowercase().as_str() {
-            "compile" => DependencyScope::Compile,
-            "provided" => DependencyScope::Provided,
-            "runtime" => DependencyScope::Runtime,
-            "test" => DependencyScope::Test,
-            "system" => DependencyScope::System,
-            "import" => DependencyScope::Import,
-            _ => DependencyScope::Compile,
-        }
-    }
-
     pub fn as_str(&self) -> &'static str {
         match self {
             DependencyScope::Compile => "compile",
@@ -47,20 +36,36 @@ impl DependencyScope {
         }
     }
 
-    /// Check if this scope is included in compile classpath
     pub fn in_compile_classpath(&self) -> bool {
-        matches!(self, DependencyScope::Compile | DependencyScope::Provided | DependencyScope::System)
+        matches!(
+            self,
+            DependencyScope::Compile | DependencyScope::Provided | DependencyScope::System
+        )
     }
 
-    /// Check if this scope is included in runtime classpath
     pub fn in_runtime_classpath(&self) -> bool {
         matches!(self, DependencyScope::Compile | DependencyScope::Runtime)
     }
 
-    /// Check if this scope is included in test classpath
     pub fn in_test_classpath(&self) -> bool {
         // Test classpath includes everything except import
         !matches!(self, DependencyScope::Import)
+    }
+}
+
+impl FromStr for DependencyScope {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "compile" => Ok(DependencyScope::Compile),
+            "provided" => Ok(DependencyScope::Provided),
+            "runtime" => Ok(DependencyScope::Runtime),
+            "test" => Ok(DependencyScope::Test),
+            "system" => Ok(DependencyScope::System),
+            "import" => Ok(DependencyScope::Import),
+            _ => Err(format!("Invalid dependency scope: {}", s)),
+        }
     }
 }
 
@@ -129,7 +134,10 @@ impl ResolvedDependency {
     /// Get the full coordinate including classifier
     pub fn full_coordinate(&self) -> String {
         if let Some(ref classifier) = self.classifier {
-            format!("{}:{}:{}:{}", self.group_id, self.artifact_id, self.version, classifier)
+            format!(
+                "{}:{}:{}:{}",
+                self.group_id, self.artifact_id, self.version, classifier
+            )
         } else {
             self.gav()
         }
@@ -172,9 +180,9 @@ impl DependencyContext {
     /// Check if a dependency is excluded
     pub fn is_excluded(&self, group_id: &str, artifact_id: &str) -> bool {
         let key = format!("{group_id}:{artifact_id}");
-        self.exclusions.contains(&key) || 
-        self.exclusions.contains(&format!("{group_id}:*")) ||
-        self.exclusions.contains("*:*")
+        self.exclusions.contains(&key)
+            || self.exclusions.contains(&format!("{group_id}:*"))
+            || self.exclusions.contains("*:*")
     }
 
     /// Set scope filter
@@ -220,16 +228,15 @@ impl DependencyContext {
             self.compile_classpath()
         };
 
-        deps.iter()
-            .filter_map(|d| d.file.clone())
-            .collect()
+        deps.iter().filter_map(|d| d.file.clone()).collect()
     }
 
     /// Get classpath as a string
     pub fn classpath_string(&self, include_test: bool) -> String {
         let paths = self.classpath_paths(include_test);
         let separator = if cfg!(windows) { ";" } else { ":" };
-        paths.iter()
+        paths
+            .iter()
             .map(|p| p.to_string_lossy().to_string())
             .collect::<Vec<_>>()
             .join(separator)
@@ -237,7 +244,9 @@ impl DependencyContext {
 
     /// Get a dependency by GAV
     pub fn get(&self, gav: &str) -> Option<&ResolvedDependency> {
-        self.dependency_index.get(gav).map(|&i| &self.dependencies[i])
+        self.dependency_index
+            .get(gav)
+            .map(|&i| &self.dependencies[i])
     }
 
     /// Check if a dependency exists
@@ -262,8 +271,11 @@ mod tests {
 
     #[test]
     fn test_dependency_scope() {
-        assert_eq!(DependencyScope::from_str("compile"), DependencyScope::Compile);
-        assert_eq!(DependencyScope::from_str("TEST"), DependencyScope::Test);
+        assert_eq!(
+            DependencyScope::from_str("compile"),
+            Ok(DependencyScope::Compile)
+        );
+        assert_eq!(DependencyScope::from_str("TEST"), Ok(DependencyScope::Test));
         assert_eq!(DependencyScope::Compile.as_str(), "compile");
     }
 
@@ -295,14 +307,18 @@ mod tests {
     #[test]
     fn test_dependency_context() {
         let mut ctx = DependencyContext::new();
-        
-        ctx.add(ResolvedDependency::new("g", "a", "1.0")
-            .with_scope(DependencyScope::Compile)
-            .with_file(PathBuf::from("/a.jar")));
-        
-        ctx.add(ResolvedDependency::new("g", "b", "1.0")
-            .with_scope(DependencyScope::Test)
-            .with_file(PathBuf::from("/b.jar")));
+
+        ctx.add(
+            ResolvedDependency::new("g", "a", "1.0")
+                .with_scope(DependencyScope::Compile)
+                .with_file(PathBuf::from("/a.jar")),
+        );
+
+        ctx.add(
+            ResolvedDependency::new("g", "b", "1.0")
+                .with_scope(DependencyScope::Test)
+                .with_file(PathBuf::from("/b.jar")),
+        );
 
         assert_eq!(ctx.len(), 2);
         assert_eq!(ctx.compile_classpath().len(), 1);
@@ -321,10 +337,8 @@ mod tests {
     #[test]
     fn test_classpath_string() {
         let mut ctx = DependencyContext::new();
-        ctx.add(ResolvedDependency::new("g", "a", "1.0")
-            .with_file(PathBuf::from("/a.jar")));
-        ctx.add(ResolvedDependency::new("g", "b", "1.0")
-            .with_file(PathBuf::from("/b.jar")));
+        ctx.add(ResolvedDependency::new("g", "a", "1.0").with_file(PathBuf::from("/a.jar")));
+        ctx.add(ResolvedDependency::new("g", "b", "1.0").with_file(PathBuf::from("/b.jar")));
 
         let cp = ctx.classpath_string(false);
         assert!(cp.contains("/a.jar"));

@@ -3,6 +3,5 @@
 //! Responsible for code quality checks (linting, formatting).
 
 pub mod aggregates;
-pub mod value_objects;
 pub mod services;
-
+pub mod value_objects;

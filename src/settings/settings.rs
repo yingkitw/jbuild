@@ -38,8 +38,8 @@ pub struct Settings {
     pub active_profiles: Option<Vec<String>>,
 }
 
-impl Settings {
-    pub fn default() -> Self {
+impl Default for Settings {
+    fn default() -> Self {
         Self {
             local_repository: None,
             interactive_mode: Some(true),
@@ -52,4 +52,3 @@ impl Settings {
         }
     }
 }
-

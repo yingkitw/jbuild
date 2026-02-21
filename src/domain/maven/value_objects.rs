@@ -1,7 +1,8 @@
 //! Value objects for Maven context
 
 use serde::{Deserialize, Serialize};
-use std::fmt;
+use std::cmp::Ordering;
+use std::str::FromStr;
 
 /// Maven lifecycle phase value object
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -10,7 +11,7 @@ pub enum LifecyclePhase {
     PreClean,
     Clean,
     PostClean,
-    
+
     // Default lifecycle
     Validate,
     Initialize,
@@ -35,7 +36,7 @@ pub enum LifecyclePhase {
     Verify,
     Install,
     Deploy,
-    
+
     // Site lifecycle
     PreSite,
     Site,
@@ -43,136 +44,89 @@ pub enum LifecyclePhase {
     SiteDeploy,
 }
 
+crate::impl_data_driven_enum!(LifecyclePhase, {
+    // Clean lifecycle
+    PreClean => { name: "pre-clean", order: 0 },
+    Clean => { name: "clean", order: 1 },
+    PostClean => { name: "post-clean", order: 2 },
+
+    // Default lifecycle
+    Validate => { name: "validate", order: 100 },
+    Initialize => { name: "initialize", order: 101 },
+    GenerateSources => { name: "generate-sources", order: 102 },
+    ProcessSources => { name: "process-sources", order: 103 },
+    GenerateResources => { name: "generate-resources", order: 104 },
+    ProcessResources => { name: "process-resources", order: 105 },
+    Compile => { name: "compile", order: 106 },
+    ProcessClasses => { name: "process-classes", order: 107 },
+    GenerateTestSources => { name: "generate-test-sources", order: 108 },
+    ProcessTestSources => { name: "process-test-sources", order: 109 },
+    GenerateTestResources => { name: "generate-test-resources", order: 110 },
+    ProcessTestResources => { name: "process-test-resources", order: 111 },
+    TestCompile => { name: "test-compile", order: 112 },
+    ProcessTestClasses => { name: "process-test-classes", order: 113 },
+    Test => { name: "test", order: 114 },
+    PreparePackage => { name: "prepare-package", order: 115 },
+    Package => { name: "package", order: 116 },
+    PreIntegrationTest => { name: "pre-integration-test", order: 117 },
+    IntegrationTest => { name: "integration-test", order: 118 },
+    PostIntegrationTest => { name: "post-integration-test", order: 119 },
+    Verify => { name: "verify", order: 120 },
+    Install => { name: "install", order: 121 },
+    Deploy => { name: "deploy", order: 122 },
+
+    // Site lifecycle
+    PreSite => { name: "pre-site", order: 200 },
+    Site => { name: "site", order: 201 },
+    PostSite => { name: "post-site", order: 202 },
+    SiteDeploy => { name: "site-deploy", order: 203 },
+});
+
+impl FromStr for LifecyclePhase {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "pre-clean" => Ok(LifecyclePhase::PreClean),
+            "clean" => Ok(LifecyclePhase::Clean),
+            "post-clean" => Ok(LifecyclePhase::PostClean),
+            "validate" => Ok(LifecyclePhase::Validate),
+            "initialize" => Ok(LifecyclePhase::Initialize),
+            "generate-sources" => Ok(LifecyclePhase::GenerateSources),
+            "process-sources" => Ok(LifecyclePhase::ProcessSources),
+            "generate-resources" => Ok(LifecyclePhase::GenerateResources),
+            "process-resources" => Ok(LifecyclePhase::ProcessResources),
+            "compile" => Ok(LifecyclePhase::Compile),
+            "process-classes" => Ok(LifecyclePhase::ProcessClasses),
+            "generate-test-sources" => Ok(LifecyclePhase::GenerateTestSources),
+            "process-test-sources" => Ok(LifecyclePhase::ProcessTestSources),
+            "generate-test-resources" => Ok(LifecyclePhase::GenerateTestResources),
+            "process-test-resources" => Ok(LifecyclePhase::ProcessTestResources),
+            "test-compile" => Ok(LifecyclePhase::TestCompile),
+            "process-test-classes" => Ok(LifecyclePhase::ProcessTestClasses),
+            "test" => Ok(LifecyclePhase::Test),
+            "prepare-package" => Ok(LifecyclePhase::PreparePackage),
+            "package" => Ok(LifecyclePhase::Package),
+            "pre-integration-test" => Ok(LifecyclePhase::PreIntegrationTest),
+            "integration-test" => Ok(LifecyclePhase::IntegrationTest),
+            "post-integration-test" => Ok(LifecyclePhase::PostIntegrationTest),
+            "verify" => Ok(LifecyclePhase::Verify),
+            "install" => Ok(LifecyclePhase::Install),
+            "deploy" => Ok(LifecyclePhase::Deploy),
+            "pre-site" => Ok(LifecyclePhase::PreSite),
+            "site" => Ok(LifecyclePhase::Site),
+            "post-site" => Ok(LifecyclePhase::PostSite),
+            "site-deploy" => Ok(LifecyclePhase::SiteDeploy),
+            _ => Err(format!("Invalid lifecycle phase: {}", s)),
+        }
+    }
+}
+
 impl LifecyclePhase {
-    /// Returns the phase name as a string
-    pub fn as_str(&self) -> &str {
-        match self {
-            // Clean lifecycle
-            LifecyclePhase::PreClean => "pre-clean",
-            LifecyclePhase::Clean => "clean",
-            LifecyclePhase::PostClean => "post-clean",
-            
-            // Default lifecycle
-            LifecyclePhase::Validate => "validate",
-            LifecyclePhase::Initialize => "initialize",
-            LifecyclePhase::GenerateSources => "generate-sources",
-            LifecyclePhase::ProcessSources => "process-sources",
-            LifecyclePhase::GenerateResources => "generate-resources",
-            LifecyclePhase::ProcessResources => "process-resources",
-            LifecyclePhase::Compile => "compile",
-            LifecyclePhase::ProcessClasses => "process-classes",
-            LifecyclePhase::GenerateTestSources => "generate-test-sources",
-            LifecyclePhase::ProcessTestSources => "process-test-sources",
-            LifecyclePhase::GenerateTestResources => "generate-test-resources",
-            LifecyclePhase::ProcessTestResources => "process-test-resources",
-            LifecyclePhase::TestCompile => "test-compile",
-            LifecyclePhase::ProcessTestClasses => "process-test-classes",
-            LifecyclePhase::Test => "test",
-            LifecyclePhase::PreparePackage => "prepare-package",
-            LifecyclePhase::Package => "package",
-            LifecyclePhase::PreIntegrationTest => "pre-integration-test",
-            LifecyclePhase::IntegrationTest => "integration-test",
-            LifecyclePhase::PostIntegrationTest => "post-integration-test",
-            LifecyclePhase::Verify => "verify",
-            LifecyclePhase::Install => "install",
-            LifecyclePhase::Deploy => "deploy",
-            
-            // Site lifecycle
-            LifecyclePhase::PreSite => "pre-site",
-            LifecyclePhase::Site => "site",
-            LifecyclePhase::PostSite => "post-site",
-            LifecyclePhase::SiteDeploy => "site-deploy",
-        }
-    }
-
-    /// Parses a phase from a string
-    pub fn from_str(s: &str) -> Option<Self> {
-        match s.to_lowercase().as_str() {
-            // Clean lifecycle
-            "pre-clean" => Some(LifecyclePhase::PreClean),
-            "clean" => Some(LifecyclePhase::Clean),
-            "post-clean" => Some(LifecyclePhase::PostClean),
-            
-            // Default lifecycle
-            "validate" => Some(LifecyclePhase::Validate),
-            "initialize" => Some(LifecyclePhase::Initialize),
-            "generate-sources" => Some(LifecyclePhase::GenerateSources),
-            "process-sources" => Some(LifecyclePhase::ProcessSources),
-            "generate-resources" => Some(LifecyclePhase::GenerateResources),
-            "process-resources" => Some(LifecyclePhase::ProcessResources),
-            "compile" => Some(LifecyclePhase::Compile),
-            "process-classes" => Some(LifecyclePhase::ProcessClasses),
-            "generate-test-sources" => Some(LifecyclePhase::GenerateTestSources),
-            "process-test-sources" => Some(LifecyclePhase::ProcessTestSources),
-            "generate-test-resources" => Some(LifecyclePhase::GenerateTestResources),
-            "process-test-resources" => Some(LifecyclePhase::ProcessTestResources),
-            "test-compile" => Some(LifecyclePhase::TestCompile),
-            "process-test-classes" => Some(LifecyclePhase::ProcessTestClasses),
-            "test" => Some(LifecyclePhase::Test),
-            "prepare-package" => Some(LifecyclePhase::PreparePackage),
-            "package" => Some(LifecyclePhase::Package),
-            "pre-integration-test" => Some(LifecyclePhase::PreIntegrationTest),
-            "integration-test" => Some(LifecyclePhase::IntegrationTest),
-            "post-integration-test" => Some(LifecyclePhase::PostIntegrationTest),
-            "verify" => Some(LifecyclePhase::Verify),
-            "install" => Some(LifecyclePhase::Install),
-            "deploy" => Some(LifecyclePhase::Deploy),
-            
-            // Site lifecycle
-            "pre-site" => Some(LifecyclePhase::PreSite),
-            "site" => Some(LifecyclePhase::Site),
-            "post-site" => Some(LifecyclePhase::PostSite),
-            "site-deploy" => Some(LifecyclePhase::SiteDeploy),
-            
-            _ => None,
-        }
-    }
-
-    /// Returns the order of this phase in the lifecycle
-    pub fn order(&self) -> u32 {
-        match self {
-            // Clean lifecycle (0-99)
-            LifecyclePhase::PreClean => 0,
-            LifecyclePhase::Clean => 1,
-            LifecyclePhase::PostClean => 2,
-            
-            // Default lifecycle (100-199)
-            LifecyclePhase::Validate => 100,
-            LifecyclePhase::Initialize => 101,
-            LifecyclePhase::GenerateSources => 102,
-            LifecyclePhase::ProcessSources => 103,
-            LifecyclePhase::GenerateResources => 104,
-            LifecyclePhase::ProcessResources => 105,
-            LifecyclePhase::Compile => 106,
-            LifecyclePhase::ProcessClasses => 107,
-            LifecyclePhase::GenerateTestSources => 108,
-            LifecyclePhase::ProcessTestSources => 109,
-            LifecyclePhase::GenerateTestResources => 110,
-            LifecyclePhase::ProcessTestResources => 111,
-            LifecyclePhase::TestCompile => 112,
-            LifecyclePhase::ProcessTestClasses => 113,
-            LifecyclePhase::Test => 114,
-            LifecyclePhase::PreparePackage => 115,
-            LifecyclePhase::Package => 116,
-            LifecyclePhase::PreIntegrationTest => 117,
-            LifecyclePhase::IntegrationTest => 118,
-            LifecyclePhase::PostIntegrationTest => 119,
-            LifecyclePhase::Verify => 120,
-            LifecyclePhase::Install => 121,
-            LifecyclePhase::Deploy => 122,
-            
-            // Site lifecycle (200-299)
-            LifecyclePhase::PreSite => 200,
-            LifecyclePhase::Site => 201,
-            LifecyclePhase::PostSite => 202,
-            LifecyclePhase::SiteDeploy => 203,
-        }
-    }
-
     /// Returns all phases up to and including this phase
     pub fn phases_up_to(&self) -> Vec<LifecyclePhase> {
         let target_order = self.order();
-        
+
         // Determine which lifecycle this phase belongs to
         let lifecycle_phases = if target_order < 100 {
             // Clean lifecycle
@@ -225,29 +179,14 @@ impl LifecyclePhase {
     }
 }
 
-impl fmt::Display for LifecyclePhase {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            LifecyclePhase::Validate => write!(f, "validate"),
-            LifecyclePhase::Compile => write!(f, "compile"),
-            LifecyclePhase::Test => write!(f, "test"),
-            LifecyclePhase::Package => write!(f, "package"),
-            LifecyclePhase::Install => write!(f, "install"),
-            LifecyclePhase::Deploy => write!(f, "deploy"),
-            _ => write!(f, "{}", self.as_str()),
-        }
-    }
-}
-
-
 impl PartialOrd for LifecyclePhase {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.order().cmp(&other.order()))
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
 
 impl Ord for LifecyclePhase {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+    fn cmp(&self, other: &Self) -> Ordering {
         self.order().cmp(&other.order())
     }
 }
@@ -258,10 +197,16 @@ mod tests {
 
     #[test]
     fn test_lifecycle_phase_from_str() {
-        assert_eq!(LifecyclePhase::from_str("compile"), Some(LifecyclePhase::Compile));
-        assert_eq!(LifecyclePhase::from_str("test"), Some(LifecyclePhase::Test));
-        assert_eq!(LifecyclePhase::from_str("package"), Some(LifecyclePhase::Package));
-        assert_eq!(LifecyclePhase::from_str("invalid"), None);
+        assert_eq!(
+            "compile".parse::<LifecyclePhase>(),
+            Ok(LifecyclePhase::Compile)
+        );
+        assert_eq!("test".parse::<LifecyclePhase>(), Ok(LifecyclePhase::Test));
+        assert_eq!(
+            "package".parse::<LifecyclePhase>(),
+            Ok(LifecyclePhase::Package)
+        );
+        assert!("invalid".parse::<LifecyclePhase>().is_err());
     }
 
     #[test]

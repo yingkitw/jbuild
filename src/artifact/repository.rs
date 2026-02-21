@@ -29,8 +29,10 @@ impl DefaultLocalRepository {
     pub fn new(base_directory: PathBuf) -> Self {
         Self { base_directory }
     }
+}
 
-    pub fn default() -> Self {
+impl Default for DefaultLocalRepository {
+    fn default() -> Self {
         let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
         let mut path = PathBuf::from(home);
         path.push(".m2");
@@ -44,4 +46,3 @@ impl LocalRepository for DefaultLocalRepository {
         &self.base_directory
     }
 }
-

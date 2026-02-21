@@ -1,9 +1,9 @@
 //! Shared value objects used across bounded contexts
 
+use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::fmt;
 use std::path::PathBuf;
-use serde::{Deserialize, Serialize};
 
 /// Version value object with semantic comparison
 #[derive(Debug, Clone, Eq, Hash, Serialize, Deserialize)]
@@ -51,8 +51,12 @@ impl Version {
 
         // Compare component by component
         for i in 0..self_components.len().max(other_components.len()) {
-            let self_comp = self_components.get(i).unwrap_or(&VersionComponent::Numeric(0));
-            let other_comp = other_components.get(i).unwrap_or(&VersionComponent::Numeric(0));
+            let self_comp = self_components
+                .get(i)
+                .unwrap_or(&VersionComponent::Numeric(0));
+            let other_comp = other_components
+                .get(i)
+                .unwrap_or(&VersionComponent::Numeric(0));
 
             match self_comp.cmp(other_comp) {
                 Ordering::Equal => continue,
@@ -63,9 +67,9 @@ impl Version {
         // If base versions are equal, check for qualifiers
         let self_has_qualifier = self.0.contains('-');
         let other_has_qualifier = other.0.contains('-');
-        
+
         match (self_has_qualifier, other_has_qualifier) {
-            (true, false) => Ordering::Less,  // Qualified versions are less than release
+            (true, false) => Ordering::Less, // Qualified versions are less than release
             (false, true) => Ordering::Greater, // Release is greater than qualified
             _ => Ordering::Equal,
         }
@@ -103,7 +107,7 @@ impl PartialEq for Version {
 
 impl PartialOrd for Version {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.compare(other))
+        Some(std::cmp::Ord::cmp(self, other))
     }
 }
 
@@ -179,12 +183,16 @@ pub struct JavaVersion {
 
 impl JavaVersion {
     pub fn new(major: u32, minor: u32, patch: u32) -> Self {
-        Self { major, minor, patch }
+        Self {
+            major,
+            minor,
+            patch,
+        }
     }
 
     pub fn from_string(version: &str) -> Option<Self> {
         let version = version.trim();
-        
+
         // Handle old format: 1.8.0
         if version.starts_with("1.") {
             let parts: Vec<&str> = version.split('.').collect();
@@ -194,7 +202,7 @@ impl JavaVersion {
                 return Some(Self::new(major, 0, patch));
             }
         }
-        
+
         // Handle new format: 17.0.1
         let parts: Vec<&str> = version.split('.').collect();
         if !parts.is_empty() {
@@ -203,7 +211,7 @@ impl JavaVersion {
             let patch = parts.get(2).and_then(|p| p.parse().ok()).unwrap_or(0);
             return Some(Self::new(major, minor, patch));
         }
-        
+
         None
     }
 
@@ -282,11 +290,13 @@ mod tests {
 
     #[test]
     fn test_version_ordering() {
-        let mut versions = [Version::new("2.0.0"),
+        let mut versions = [
+            Version::new("2.0.0"),
             Version::new("1.0.0-SNAPSHOT"),
             Version::new("1.0.0"),
             Version::new("1.5.0"),
-            Version::new("1.0.1")];
+            Version::new("1.0.1"),
+        ];
 
         versions.sort();
 
@@ -299,9 +309,26 @@ mod tests {
 
     #[test]
     fn test_java_version_parsing() {
-        assert_eq!(JavaVersion::from_string("1.8.0"), Some(JavaVersion::new(8, 0, 0)));
-        assert_eq!(JavaVersion::from_string("17.0.1"), Some(JavaVersion::new(17, 0, 1)));
-        assert_eq!(JavaVersion::from_string("11"), Some(JavaVersion::new(11, 0, 0)));
+        assert_eq!(
+            JavaVersion::from_string("1.8.0"),
+            Some(JavaVersion::new(8, 0, 0))
+        );
+        assert_eq!(
+            JavaVersion::from_string("17.0.1"),
+            Some(JavaVersion::new(17, 0, 1))
+        );
+        assert_eq!(
+            JavaVersion::from_string("11"),
+            Some(JavaVersion::new(11, 0, 0))
+        );
+        assert_eq!(
+            JavaVersion::from_string("24"),
+            Some(JavaVersion::new(24, 0, 0))
+        );
+        assert_eq!(
+            JavaVersion::from_string("24.0.1"),
+            Some(JavaVersion::new(24, 0, 1))
+        );
     }
 
     #[test]
@@ -309,9 +336,13 @@ mod tests {
         let v8 = JavaVersion::new(8, 0, 0);
         let v11 = JavaVersion::new(11, 0, 0);
         let v17 = JavaVersion::new(17, 0, 1);
-        
+        let v21 = JavaVersion::new(21, 0, 0);
+        let v24 = JavaVersion::new(24, 0, 0);
+
         assert!(v8 < v11);
         assert!(v11 < v17);
+        assert!(v17 < v21);
+        assert!(v21 < v24);
     }
 
     #[test]

@@ -107,12 +107,11 @@ impl ArtifactDownloader {
 
             match self.download_internal(artifact, &artifact_url, target_path) {
                 Ok(()) => {
-                    if self.config.verify_checksums {
-                        if let Err(e) = self.verify_checksums(artifact, repository, target_path) {
+                    if self.config.verify_checksums
+                        && let Err(e) = self.verify_checksums(artifact, repository, target_path) {
                             tracing::warn!("Checksum verification failed: {}", e);
                             // Continue anyway, but log the warning
                         }
-                    }
                     return Ok(());
                 }
                 Err(e) => {
@@ -180,7 +179,7 @@ impl ArtifactDownloader {
             if self.config.show_progress {
                 if let Some(total) = content_length {
                     let percent = (downloaded * 100) / total;
-                    if downloaded % (1024 * 1024) == 0 || downloaded == total {
+                    if downloaded.is_multiple_of(1024 * 1024) || downloaded == total {
                         tracing::info!(
                             "Downloaded {} / {} bytes ({}%)",
                             downloaded,
@@ -188,7 +187,7 @@ impl ArtifactDownloader {
                             percent
                         );
                     }
-                } else if downloaded % (1024 * 1024) == 0 {
+                } else if downloaded.is_multiple_of(1024 * 1024) {
                     tracing::info!("Downloaded {} bytes", downloaded);
                 }
             }

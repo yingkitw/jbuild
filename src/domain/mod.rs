@@ -25,20 +25,43 @@
 //! - **Repositories**: Abstraction for data access
 //! - **Domain Events**: Decoupled communication between contexts
 
-pub mod build_system;
-pub mod maven;
-pub mod gradle;
 pub mod artifact;
+pub mod build_system;
 pub mod compilation;
-pub mod testing;
+pub mod config;
+pub mod gradle;
+pub mod maven;
 pub mod packaging;
 pub mod plugin;
-pub mod config;
 pub mod quality;
 pub mod shared;
+pub mod testing;
 
-pub use build_system::*;
-pub use maven::*;
-pub use gradle::*;
-pub use artifact::*;
-pub use shared::*;
+// Re-export build_system
+pub use build_system::{
+    BuildSystemDetector,
+    value_objects::BuildFile,
+};
+
+// Re-export maven
+pub use maven::{
+    aggregates::{MavenDependency, MavenPlugin, MavenProject, PackagingType},
+    services::LifecycleExecutor,
+    value_objects::LifecyclePhase,
+};
+
+// Re-export gradle
+pub use gradle::{
+    aggregates::{Configuration, GradleProject, GradleTask},
+    services::TaskExecutor,
+};
+
+// Re-export artifact
+pub use artifact::{
+    repositories::{LocalRepository, RemoteRepository, RepositoryChain},
+    services::DependencyResolver,
+    value_objects::{ArtifactCoordinates, Scope},
+};
+
+// Re-export shared
+pub use shared::value_objects::{FilePath, JavaVersion, Version};

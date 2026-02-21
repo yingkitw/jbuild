@@ -5,9 +5,13 @@
 [![Tests](https://img.shields.io/badge/tests-285%20passing-brightgreen)]()
 [![Architecture](https://img.shields.io/badge/architecture-DDD-blue)]()
 [![Rust](https://img.shields.io/badge/rust-2024-orange)]()
+[![Java](https://img.shields.io/badge/java-8%20to%2024%2B-blue)]()
 
 > **🎉 Major Milestone**: Completed Domain-Driven Design (DDD) implementation with 285 tests passing!
 > See [DDD Implementation Complete](docs/DDD_IMPLEMENTATION_COMPLETE.md) for details.
+>
+> **☕ Java 24 Support**: jbuild supports all Java versions from 8 to 24 and beyond!
+> See [Java Version Support](docs/JAVA_VERSION_SUPPORT.md) for details.
 
 ## The Problem
 
@@ -40,6 +44,7 @@ jbuild is a **native Rust implementation** that brings the Cargo experience to J
 4. **Modern UX** - Simple commands like `add`, `remove`, `search`, `tree`
 5. **Zero Config** - Works with existing `pom.xml` or `build.gradle`
 6. **Code Quality Built-in** - Integrated Checkstyle linting
+7. **All Java Versions** - Supports Java 8 through 24 and beyond
 
 ## Quick Start
 
@@ -131,7 +136,7 @@ cat > jbuild.toml <<'EOF'
 [package]
 name = "my-app"
 version = "0.1.0"
-java = "17"
+java = "21"
 
 [dependencies]
 "org.slf4j:slf4j-api" = "2.0.9"
@@ -273,8 +278,8 @@ examples/
     <packaging>jar</packaging>
     
     <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
     </properties>
     
     <dependencies>
@@ -312,8 +317,8 @@ plugins {
 group = 'com.example'
 version = '1.0.0'
 
-sourceCompatibility = '11'
-targetCompatibility = '11'
+sourceCompatibility = '21'
+targetCompatibility = '21'
 
 repositories {
     mavenCentral()
