@@ -4,8 +4,6 @@
 //! This is a core domain with rich business logic around version resolution,
 //! conflict resolution, and transitive dependency management.
 
-pub mod aggregates;
-pub mod entities;
 pub mod repositories;
 pub mod services;
 pub mod value_objects;
