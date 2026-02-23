@@ -17,6 +17,12 @@ pub mod testing;
 pub mod error;
 pub mod testing_utils;
 
+// New performance and feature modules
+pub mod incremental;
+pub mod annotation;
+pub mod language;
+pub mod migration;
+
 // Maven-specific modules
 pub mod maven;
 pub mod model;  // Maven POM model (kept for backward compatibility)

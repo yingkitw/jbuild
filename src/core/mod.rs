@@ -1,3 +1,4 @@
+pub mod cache;
 pub mod execution;
 pub mod lifecycle;
 pub mod project;
@@ -12,7 +13,9 @@ pub mod goal_parser;
 pub mod traits;
 pub mod builders;
 pub mod unit_of_work;
+pub mod persistent_cache;
 
+pub use cache::*;
 pub use execution::*;
 pub use lifecycle::*;
 pub use project::*;
@@ -27,3 +30,4 @@ pub use goal_parser::*;
 pub use traits::*;
 pub use builders::*;
 pub use unit_of_work::*;
+pub use persistent_cache::*;

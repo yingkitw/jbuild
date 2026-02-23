@@ -63,7 +63,7 @@ impl<R: ArtifactRepository> DependencyResolver<R> {
         processing.insert(key.clone());
 
         // Fetch artifact metadata from repository
-        let metadata = self.repository.get_metadata(coordinates)?;
+        let _metadata = self.repository.get_metadata(coordinates)?;
 
         // Add to resolved list
         resolved.push(ResolvedDependency {

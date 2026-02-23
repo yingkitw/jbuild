@@ -22,20 +22,21 @@ pub fn validate_fields(fields: &[(&str, &str)]) -> Result<()> {
 /// Macro to generate string conversion methods for enums
 ///
 /// # Example
-/// ```ignore
-/// # // This is a macro, usage is shown in artifact::value_objects::Scope
-/// use jbuild::impl_str_conversion;
-///
-/// #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-/// pub enum MyEnum {
-///     VariantA,
-///     VariantB,
-/// }
-///
-/// impl_str_conversion!(MyEnum, {
-///     VariantA => "variant_a",
-///     VariantB => "variant_b",
-/// });
+/// ```
+/// // This is a macro, usage is shown in artifact::value_objects::Scope
+/// // Example usage (not executable in doctest):
+/// // use jbuild::impl_str_conversion;
+/// //
+/// // #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// // pub enum MyEnum {
+/// //     VariantA,
+/// //     VariantB,
+/// // }
+/// //
+/// // impl_str_conversion!(MyEnum, {
+/// //     VariantA => "variant_a",
+/// //     VariantB => "variant_b",
+/// // });
 /// ```
 #[macro_export]
 macro_rules! impl_str_conversion {
@@ -70,20 +71,21 @@ macro_rules! impl_str_conversion {
 /// Macro to generate data-driven enum with associated values
 ///
 /// # Example
-/// ```ignore
-/// # // This is a macro, usage is shown in maven::value_objects::LifecyclePhase
-/// use jbuild::impl_data_driven_enum;
-///
-/// #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-/// pub enum MyEnum {
-///     VariantA,
-///     VariantB,
-/// }
-///
-/// impl_data_driven_enum!(MyEnum, {
-///     VariantA => { name: "variant_a", order: 0 },
-///     VariantB => { name: "variant_b", order: 1 },
-/// });
+/// ```
+/// // This is a macro, usage is shown in maven::value_objects::LifecyclePhase
+/// // Example usage (not executable in doctest):
+/// // use jbuild::impl_data_driven_enum;
+/// //
+/// // #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// // pub enum MyEnum {
+/// //     VariantA,
+/// //     VariantB,
+/// // }
+/// //
+/// // impl_data_driven_enum!(MyEnum, {
+/// //     VariantA => { name: "variant_a", order: 0 },
+/// //     VariantB => { name: "variant_b", order: 1 },
+/// // });
 /// ```
 #[macro_export]
 macro_rules! impl_data_driven_enum {
